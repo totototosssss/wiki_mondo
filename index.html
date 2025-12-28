@@ -166,6 +166,7 @@
             cursor: pointer; text-align: center; position: relative; z-index: 5; border-radius: 0 0 4px 4px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+        .show-more-btn:hover { background: #e0e0e0; }
         .show-more-btn.hidden { display: none; }
 
         /* Unified Char Box */
@@ -430,7 +431,7 @@
             seedStr = today + "_" + mode.seedSuffix; // e.g. "2024/5/20_A"
             
             // Check Save
-            const saved = localStorage.getItem(`wikimondo_score_v5_${seedStr}`);
+            const saved = localStorage.getItem(`wikimondo_score_v6_${seedStr}`);
             if(saved) {
                 restoreGame(JSON.parse(saved));
                 return;
@@ -498,11 +499,13 @@
         }, 50);
     }
 
+    // --- STRONG CENSORSHIP LOGIC ---
     function processText(title, text) {
         const coreTitle = title.replace(/ \(.*\)/, "").replace(/（.*）/, "").trim();
         STATE.targetWord = coreTitle;
         STATE.validReadings = [coreTitle];
 
+        // 1. Initial Banned Words (Title components)
         const cleanTitle = title.replace(/ \(.*\)/, "").replace(/（.*）/, "").trim();
         STATE.targetDisplay = cleanTitle;
         const splitRegex = new RegExp(CONFIG.splitters.join("|"), "g");
@@ -510,17 +513,49 @@
         const banned = new Set();
         banned.add(cleanTitle);
         parts.forEach(p => { if (p.length >= CONFIG.minWordLen) banned.add(p); });
-        const bannedWords = Array.from(banned).sort((a,b) => b.length - a.length);
 
-        let maskRanges = [];
+        // 2. Scan Text for "Title (Reading)" pattern to find aliases/readings
+        // Detect: CoreTitle followed by parenthesis
         const escapeReg = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const titleRegex = new RegExp(`(${escapeReg(coreTitle)})\\s*([（\\(].*?[）\\)])`, 'gi');
+        
+        // Find ALL occurrences to capture readings, but usually the first one is definition
         let match;
-        while ((match = titleRegex.exec(text)) !== null) {
-            maskRanges.push({ start: match.index, end: match.index + match[0].length });
+        // Text scan loop to collect readings into banned set
+        // Clone text for regex scan to avoid issues? No, exec is stateful on regex obj.
+        // We create a new regex for scanning.
+        const scanRegex = new RegExp(`(${escapeReg(coreTitle)})\\s*([（\\(].*?[）\\)])`, 'gi');
+        while ((match = scanRegex.exec(text)) !== null) {
+            // content inside parenthesis: "とくがわ いえやす" or "Tokugawa Ieyasu"
             const content = match[2].replace(/[（\(\)）]/g, "");
-            content.split(/[,、]/).forEach(r => { if(r.trim()) STATE.validReadings.push(r.trim()); });
+            // Split by comma or Japanese comma
+            const readings = content.split(/[,、]/);
+            readings.forEach(r => {
+                const clean = r.trim();
+                if(clean) {
+                    STATE.validReadings.push(clean);
+                    banned.add(clean); // Add reading to banned words!
+                    // Also split reading by space (e.g. "Tokugawa Ieyasu" -> "Tokugawa", "Ieyasu")
+                    const subParts = clean.split(/[\s　]/);
+                    subParts.forEach(sp => { if(sp.length >= CONFIG.minWordLen) banned.add(sp); });
+                }
+            });
         }
+
+        // Sort banned words by length (Longest first to avoid partial replacement issues)
+        const bannedWords = Array.from(banned).sort((a,b) => b.length - a.length);
+
+        // 3. Build Mask Ranges
+        let maskRanges = [];
+
+        // A. Mask the "Title (Reading)" blocks themselves (Definition part)
+        // Reset regex
+        const defRegex = new RegExp(`(${escapeReg(coreTitle)})\\s*([（\\(].*?[）\\)])`, 'gi');
+        while ((match = defRegex.exec(text)) !== null) {
+            maskRanges.push({ start: match.index, end: match.index + match[0].length });
+        }
+
+        // B. Mask all banned words occurrences throughout text
         bannedWords.forEach(word => {
             const wordReg = new RegExp(escapeReg(word), 'gi');
             while ((m = wordReg.exec(text)) !== null) {
@@ -528,6 +563,7 @@
             }
         });
 
+        // 4. Generate HTML
         let html = "";
         STATE.totalMaskable = 0; 
         STATE.revealHistory = new Array(text.length).fill(0); 
@@ -629,12 +665,12 @@
 
         const finalScore = isClear ? calculateScore() : 0;
 
-        // Dailyなら保存（seedSuffix含むキーで）
+        // Save if Mission
         if(!isRestore && STATE.currentMode.startsWith('mission')) {
             const today = new Date().toLocaleDateString('ja-JP');
             const suffix = MODES[STATE.currentMode].seedSuffix;
             const key = today + "_" + suffix;
-            localStorage.setItem(`wikimondo_score_v5_${key}`, JSON.stringify({
+            localStorage.setItem(`wikimondo_score_v6_${key}`, JSON.stringify({
                 score: STATE.revealed,
                 word: STATE.targetWord,
                 cleared: isClear
