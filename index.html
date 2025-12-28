@@ -6,14 +6,16 @@
     <title>WikiMondo - Daily Wikipedia Quiz</title>
     <style>
         :root {
-            --bg-color: #1a1a1a;
+            --bg-color: #121212;
             --text-color: #e0e0e0;
-            --accent-color: #4CAF50;
-            --secondary-color: #333;
+            --accent-color: #00d26a; /* Vibrant Green */
+            --secondary-color: #2c2c2c;
             --highlight-color: #2c3e50;
-            --error-color: #e74c3c;
+            --error-color: #ff5252;
             --font-main: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             background-color: var(--bg-color);
@@ -29,134 +31,165 @@
 
         .container {
             width: 90%;
-            max-width: 600px;
+            max-width: 650px;
             margin-top: 40px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 25px;
+            padding-bottom: 50px;
         }
 
         header {
             text-align: center;
-            border-bottom: 1px solid var(--secondary-color);
+            border-bottom: 1px solid #333;
             padding-bottom: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         h1 {
             margin: 0;
-            font-size: 2rem;
-            letter-spacing: 2px;
-            font-weight: 700;
+            font-size: 2.2rem;
+            letter-spacing: 3px;
+            font-weight: 800;
+            background: linear-gradient(45deg, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .subtitle {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+            font-family: monospace;
+        }
+
+        /* Loading */
+        .loading-spinner {
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 50px;
+        }
+        .loading-spinner::after {
+            content: " ";
+            display: block;
+            width: 30px;
+            height: 30px;
+            margin: 20px auto;
+            border-radius: 50%;
+            border: 3px solid #333;
+            border-color: #333 transparent #333 transparent;
+            animation: ring 1.2s linear infinite;
+        }
+        @keyframes ring {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Game Area */
+        .hint-box {
+            background-color: var(--secondary-color);
+            padding: 25px;
+            border-radius: 12px;
+            line-height: 1.9;
+            font-size: 1.05rem;
+            min-height: 180px;
+            white-space: pre-wrap;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 伏せ字のスタイル */
+        .masked-word {
+            background-color: #444;
+            color: transparent;
+            border-radius: 4px;
+            margin: 0 2px;
+            user-select: none;
+            transition: color 0.3s, background-color 0.3s;
+        }
+        
+        .revealed-char {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-area {
+            display: flex;
+            gap: 12px;
+            position: relative;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 15px;
+            font-size: 1.1rem;
+            border: 2px solid #444;
+            background: #1e1e1e;
+            color: var(--text-color);
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+            background: #252525;
+        }
+
+        button#submit-btn {
+            padding: 0 30px;
+            font-size: 1rem;
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        button#submit-btn:active {
+            transform: scale(0.96);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 0.8rem;
             color: #888;
             margin-top: 5px;
         }
 
-        /* Game Area */
-        #game-area {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .hint-box {
-            background-color: var(--secondary-color);
-            padding: 20px;
-            border-radius: 8px;
-            line-height: 1.8;
-            font-size: 1rem;
-            min-height: 150px;
-            white-space: pre-wrap;
-            position: relative;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        .censor {
-            background-color: var(--text-color);
-            color: var(--text-color);
-            border-radius: 2px;
-            user-select: none;
-            cursor: help;
-        }
-        
-        /* Reveal Animation */
-        .revealed-char {
-            animation: fadeIn 0.2s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .input-area {
-            display: flex;
-            gap: 10px;
-        }
-
-        input[type="text"] {
-            flex-grow: 1;
-            padding: 12px;
-            font-size: 1rem;
-            border: 2px solid var(--secondary-color);
-            background: transparent;
-            color: var(--text-color);
-            border-radius: 6px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--accent-color);
-        }
-
-        button {
-            padding: 12px 24px;
-            font-size: 1rem;
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: opacity 0.2s;
-        }
-
-        button:hover {
-            opacity: 0.9;
-        }
-
-        button:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-        }
-
         .status-message {
             text-align: center;
-            height: 20px;
-            font-size: 0.9rem;
+            min-height: 24px;
             font-weight: bold;
+            font-size: 0.95rem;
         }
-
-        .success { color: var(--accent-color); }
-        .error { color: var(--error-color); }
+        .status-message.error { color: var(--error-color); }
 
         /* Modal / Results */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
             display: flex;
             justify-content: center;
             align-items: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s;
-            z-index: 100;
+            transition: opacity 0.4s;
+            z-index: 1000;
         }
 
         .modal-overlay.active {
@@ -165,53 +198,96 @@
         }
 
         .modal {
-            background: var(--secondary-color);
-            padding: 30px;
-            border-radius: 12px;
+            background: #222;
+            padding: 40px;
+            border-radius: 16px;
             width: 90%;
-            max-width: 400px;
+            max-width: 420px;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            transform: translateY(20px);
+            transition: transform 0.4s;
+        }
+        
+        .modal-overlay.active .modal {
+            transform: translateY(0);
         }
 
         .result-title {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             margin-bottom: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
         }
 
         .result-answer {
-            font-size: 1.2rem;
-            color: var(--accent-color);
-            margin: 15px 0;
-            font-weight: bold;
-        }
-
-        .stats {
-            display: flex;
-            justify-content: space-around;
+            font-size: 1.4rem;
+            color: #fff;
             margin: 20px 0;
-            background: rgba(0,0,0,0.2);
+            font-weight: bold;
             padding: 10px;
-            border-radius: 6px;
+            border-bottom: 1px solid #444;
+            border-top: 1px solid #444;
         }
 
-        .stat-item {
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .stat-box {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
             display: flex;
             flex-direction: column;
         }
-        .stat-val { font-size: 1.2rem; font-weight: bold; }
-        .stat-label { font-size: 0.7rem; color: #aaa; }
+        
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: var(--accent-color); }
+        .stat-label { font-size: 0.75rem; color: #aaa; text-transform: uppercase; margin-top: 5px; }
 
-        .share-btn {
+        .action-btn {
             background-color: #3b82f6;
-            margin-top: 10px;
+            color: white;
+            border: none;
+            padding: 15px;
             width: 100%;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
+        .wiki-link-btn {
+            background-color: transparent;
+            border: 1px solid #555;
+            color: #ccc;
+            margin-bottom: 10px;
+        }
+        
         .timer {
-            margin-top: 15px;
-            font-size: 0.9rem;
-            color: #888;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #666;
+            font-family: monospace;
+        }
+
+        /* Shake Animation */
+        .shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
         }
     </style>
 </head>
@@ -223,20 +299,21 @@
         <div class="subtitle" id="date-display"></div>
     </header>
 
-    <div id="loading" style="text-align: center;">今日の問題をロード中...</div>
+    <div id="loading" class="loading-spinner">Wikipediaから本日の問題を抽出中...</div>
 
     <div id="game-area" style="display: none;">
-        <div class="hint-box" id="hint-text">
-            </div>
-        
         <div class="status-message" id="status-msg"></div>
+        
+        <div class="hint-box" id="hint-text"></div>
+        
+        <div class="status-bar">
+            <span>文字開示率: <span id="progress-percent" style="color: var(--accent-color); font-weight:bold;">0</span>%</span>
+            <span id="char-count-info"></span>
+        </div>
 
         <div class="input-area">
-            <input type="text" id="guess-input" placeholder="記事のタイトルを推測..." autocomplete="off">
+            <input type="text" id="guess-input" placeholder="記事のタイトルは？" autocomplete="off">
             <button id="submit-btn">回答</button>
-        </div>
-        <div style="text-align: right; font-size: 0.8rem; color: #666;">
-            文字開示率: <span id="progress-percent">0</span>%
         </div>
     </div>
 </div>
@@ -244,59 +321,53 @@
 <div class="modal-overlay" id="result-modal">
     <div class="modal">
         <div class="result-title" id="modal-title">RESULT</div>
-        <p>正解は...</p>
-        <div class="result-answer" id="modal-answer">?</div>
         
-        <div class="stats">
-            <div class="stat-item">
+        <div class="result-answer" id="modal-answer"></div>
+        
+        <div class="stats-grid">
+            <div class="stat-box">
                 <span class="stat-val" id="stat-progress">0%</span>
-                <span class="stat-label">開示率</span>
+                <span class="stat-label">開示率 (Score)</span>
             </div>
-            <div class="stat-item">
+            <div class="stat-box">
                 <span class="stat-val" id="stat-attempts">0</span>
                 <span class="stat-label">誤答数</span>
             </div>
         </div>
 
-        <div id="wiki-link-container" style="margin-bottom: 15px;">
-            <a id="wiki-link" href="#" target="_blank" style="color: #fff; text-decoration: underline;">Wikipediaで読む</a>
-        </div>
+        <button class="action-btn wiki-link-btn" id="wiki-btn">
+            Wikipediaで記事を読む
+        </button>
 
-        <button class="share-btn" id="share-btn">結果をコピーして共有</button>
-        <div class="timer" id="next-quiz-timer">次の問題まで: --:--:--</div>
+        <button class="action-btn" id="share-btn">
+            結果をシェアする
+        </button>
+        
+        <div class="timer" id="next-quiz-timer">--:--:--</div>
     </div>
 </div>
 
 <script>
-    // --- Configuration & Dictionary ---
-    // ※ 本来はAPI等で動的に取得するのが理想ですが、安定動作のため
-    // 「有名で5文字以上」の単語リストをハードコードしています。
-    // GitHub Pagesならこのリストを別ファイルで管理してもOK。
-    const WORD_LIST = [
-        "人工知能", "相対性理論", "パンケーキ", "ルネサンス", "ブラックホール",
-        "自由の女神像", "マリー・アントワネット", "京都議定書", "シャーロック・ホームズ",
-        "エッフェル塔", "ナポレオン・ボナパルト", "ハリー・ポッター", "ミケランジェロ",
-        "量子力学", "インスタントラーメン", "万里の長城", "ピラミッド", "モナ・リザ",
-        "シェイクスピア", "オードリー・ヘプバーン", "地動説", "ツタンカーメン",
-        "サグラダ・ファミリア", "コペルニクス", "スティーブ・ジョブズ", "バック・トゥ・ザ・フューチャー",
-        "ポケットモンスター", "スーパーマリオブラザーズ", "アルベルト・アインシュタイン",
-        "タイタニック", "ガラパゴス諸島", "ナスカの地上絵", "アポロ11号",
-        "インターネット", "スマートフォン", "クロワッサン", "カメハメハ1世",
-        "源氏物語", "織田信長", "坂本龍馬", "東京スカイツリー", "富士山",
-        "ベートーヴェン", "モーツァルト", "レオナルド・ダ・ヴィンチ", "万有引力"
-    ];
+    // --- Config ---
+    // Wikipedia API関連
+    const WIKI_API = "https://ja.wikipedia.org/w/api.php";
+    // 検索対象カテゴリ: 良質な記事 (質と知名度が担保されている)
+    const TARGET_CATEGORY = "Category:良質な記事";
+    // 五十音リスト（検索開始位置のランダム化に使用）
+    const SORT_KEYS = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわ";
 
-    // --- State Management ---
+    // --- State ---
     const STATE = {
         todayStr: new Date().toLocaleDateString('ja-JP'),
-        targetWord: "",
-        fullText: "",
-        maskedText: "", // The text with answers replaced by [LOCK]
-        revealedCount: 0, // How many chars are currently visible
-        totalChars: 0,
+        targetWord: "",     // 正解の単語
+        fullText: "",       // 元のテキスト（答えは伏せ字前）
+        displayHtml: "",    // 表示用のHTML（答えはタグで囲む）
+        revealedCount: 0,   // 現在見えている文字数
+        totalChars: 0,      // テキストの総文字数
         isGameOver: false,
         attempts: 0,
-        intervalId: null
+        intervalId: null,
+        seedVal: 0          // 今日の乱数シード
     };
 
     const ELS = {
@@ -308,20 +379,19 @@
         status: document.getElementById('status-msg'),
         date: document.getElementById('date-display'),
         percent: document.getElementById('progress-percent'),
+        charCountInfo: document.getElementById('char-count-info'),
         modal: document.getElementById('result-modal'),
         modalTitle: document.getElementById('modal-title'),
         modalAnswer: document.getElementById('modal-answer'),
         statProgress: document.getElementById('stat-progress'),
         statAttempts: document.getElementById('stat-attempts'),
         shareBtn: document.getElementById('share-btn'),
-        wikiLink: document.getElementById('wiki-link'),
+        wikiBtn: document.getElementById('wiki-btn'),
         timer: document.getElementById('next-quiz-timer')
     };
 
-    // --- Helper Functions ---
-
-    // Seeded Random Generator (日替わり用)
-    // xmur3 hash function
+    // --- Random Number Generator (Seeded) ---
+    // 日付文字列をシードにして、常に同じ乱数系列を生成する
     function xmur3(str) {
         let h = 1779033703 ^ str.length;
         for(let i = 0; i < str.length; i++) {
@@ -334,8 +404,6 @@
             return (h ^= h >>> 16) >>> 0;
         }
     }
-
-    // Mulberry32 random generator
     function mulberry32(a) {
         return function() {
             var t = a += 0x6D2B79F5;
@@ -345,111 +413,222 @@
         }
     }
 
-    function getDailyWord() {
-        // Use YYYY-MM-DD as seed
-        const seed = xmur3(STATE.todayStr);
-        const rand = mulberry32(seed());
-        const index = Math.floor(rand() * WORD_LIST.length);
-        return WORD_LIST[index];
-    }
-
-    // --- Wikipedia API ---
-    async function fetchWikiData(title) {
-        const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro&explaintext&origin=*&titles=${encodeURIComponent(title)}`;
-        
+    // --- Wikipedia API Logic ---
+    
+    // APIから今日の記事を取得するメインフロー
+    async function fetchDailyProblem() {
         try {
-            const res = await fetch(endpoint);
-            const data = await res.json();
-            const pages = data.query.pages;
-            const pageId = Object.keys(pages)[0];
-            if (pageId === "-1") throw new Error("Page not found");
-            return pages[pageId].extract;
+            // 1. 日付シードを作成
+            const seedFunc = xmur3(STATE.todayStr);
+            const rng = mulberry32(seedFunc()); // これが乱数生成器(0.0 - 1.0)
+            STATE.seedVal = rng; // 保持
+
+            // 2. 検索の開始文字(あ-ん)をランダムに決定
+            // これにより、毎日「良質な記事」リストの異なる場所から検索を始める
+            const sortKeyIndex = Math.floor(rng() * SORT_KEYS.length);
+            const startSortKey = SORT_KEYS[sortKeyIndex];
+            
+            // 3. カテゴリメンバーを取得
+            // cmtype=page (サブカテゴリ除外), cmlimit=50 (候補として十分な数)
+            const listUrl = `${WIKI_API}?action=query&list=categorymembers&cmtitle=${encodeURIComponent(TARGET_CATEGORY)}&cmtype=page&cmsort=sortkey&cmstartsortkey=${encodeURIComponent(startSortKey)}&cmlimit=50&format=json&origin=*`;
+            
+            const listRes = await fetch(listUrl);
+            const listData = await listRes.json();
+            
+            if (!listData.query || !listData.query.categorymembers || listData.query.categorymembers.length === 0) {
+                // 検索結果がない場合（稀）、"あ"から再検索などのフォールバックが必要だが、
+                // 簡単のため、もう一度固定の「あ」で検索する簡易リトライ
+                return fetchFallbackProblem();
+            }
+
+            // 4. 候補リストからフィルタリング (5文字以上)
+            // 括弧書き（アニメ）などを除く処理を入れても良いが、今回はシンプルに文字数のみ
+            let candidates = listData.query.categorymembers.filter(item => {
+                // 曖昧さ回避などを簡易除外、タイトル文字数チェック
+                return item.title.length >= 5 && !item.title.includes("一覧");
+            });
+
+            if (candidates.length === 0) {
+                // フィルタ後に残らなかった場合もフォールバック
+                return fetchFallbackProblem();
+            }
+
+            // 5. 候補の中から1つ選ぶ (ここでもシード乱数を使う)
+            // 先ほどのrngは使い回すと状態が進むのでOK
+            const pickIndex = Math.floor(rng() * candidates.length);
+            const selectedPage = candidates[pickIndex];
+            
+            // 6. 選ばれた記事の本文（概要）を取得
+            return await fetchArticleDetail(selectedPage.title);
+
         } catch (e) {
             console.error(e);
-            return "データの取得に失敗しました。";
+            alert("問題の取得に失敗しました。ページをリロードしてください。");
+            return null;
         }
+    }
+
+    // フォールバック（万が一検索ヒットしなかった場合、固定の有名記事などを出す安全策）
+    // 今回は簡易的に「秀逸な記事」カテゴリの先頭を取りに行く
+    async function fetchFallbackProblem() {
+        const backupTitle = "インターネット"; // 最終手段
+        return await fetchArticleDetail(backupTitle);
+    }
+
+    async function fetchArticleDetail(title) {
+        const detailUrl = `${WIKI_API}?action=query&format=json&prop=extracts&exintro&explaintext&origin=*&titles=${encodeURIComponent(title)}`;
+        const res = await fetch(detailUrl);
+        const data = await res.json();
+        const pages = data.query.pages;
+        const pageId = Object.keys(pages)[0];
+        
+        if (pageId === "-1") throw new Error("Page details not found");
+        
+        const extract = pages[pageId].extract;
+        return {
+            title: title,
+            text: extract
+        };
     }
 
     // --- Game Logic ---
 
-    function censorText(text, answer) {
-        // 答えそのものと、カタカナ表記などを隠したい。
-        // 簡易版として、答えの文字列を「████」に置換
-        // 正規表現で、大文字小文字無視、グローバル置換
-        const escapedAnswer = answer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(escapedAnswer, 'gi');
-        return text.replace(regex, "🔒".repeat(answer.length)); // 絵文字1つで置換、あるいは文字数分隠す
+    function prepareText(title, text) {
+        // 1. テキストのクリーニング
+        let cleanText = text.replace(/\n/g, "");
+        if(cleanText.length > 280) cleanText = cleanText.substring(0, 280) + "...";
+
+        // 2. 答え（タイトル）の隠蔽処理
+        // カッコ書き（例：林檎 (果物)）がある場合、メインの単語「林檎」だけ隠すか、全部隠すか。
+        // ここでは、スペースやカッコの前までをメインアンサーとみなす簡易ロジック
+        // あるいはタイトルそのものを隠す。
+        // タイトルに含まれる単語が本文に出てきたら全て隠す。
+        
+        // タイトルから「_」をスペースに
+        const safeTitle = title.replace(/_/g, " ");
+        // 括弧除去（単純なタイトルマッチのため）
+        const coreTitle = safeTitle.replace(/ \(.*\)/, ""); 
+        
+        // 本文中のタイトルを隠す（大文字小文字無視）
+        // 長い順に置換しないと、部分一致で崩れる可能性があるが、今回はcoreTitleのみ
+        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapeRegExp(coreTitle), 'gi');
+
+        // 置換ロジック: 
+        // 表示用HTML配列を作るために、テキストを分解するのではなく、
+        // 1文字ずつのオブジェクト配列を作るのがアニメーションしやすい。
+        
+        let processedChars = []; // { char: string, isMasked: bool }
+
+        // マッチ箇所を特定してフラグを立てるのは複雑なので、
+        // 一旦プレースホルダーに置換してから、配列に展開する戦略をとる。
+        // ただし、文字数を維持したいので、マッチした文字列の長さ分だけ特別なMASK文字を入れる。
+        
+        // 単純化: 本文をスキャンして、マスク対象インデックスを特定する
+        let maskIndices = new Set();
+        let match;
+        while ((match = regex.exec(cleanText)) !== null) {
+            for(let i = 0; i < match[0].length; i++) {
+                maskIndices.add(match.index + i);
+            }
+        }
+
+        // 配列生成
+        for(let i=0; i<cleanText.length; i++) {
+            processedChars.push({
+                char: cleanText[i],
+                isMasked: maskIndices.has(i)
+            });
+        }
+
+        return {
+            title: title,
+            chars: processedChars
+        };
     }
 
-    function initGame() {
+    async function initGame() {
         ELS.date.textContent = STATE.todayStr;
         
         // Check LocalStorage
-        const saveKey = `wikimondo_${STATE.todayStr}`;
+        const saveKey = `wikimondo_v2_${STATE.todayStr}`; // version 2 key
         const savedData = localStorage.getItem(saveKey);
 
-        STATE.targetWord = getDailyWord();
-
         if (savedData) {
-            // Already played today
             const parsed = JSON.parse(savedData);
+            STATE.targetWord = parsed.word; // 必要
             showResultModal(parsed.success, parsed.attempts, parsed.progress);
-            // Even if played, fetching text to show in background (optional)
-            // But let's just keep the modal open.
+            ELS.loading.style.display = 'none';
             return;
         }
 
-        startLevel();
-    }
+        // Fetch Data
+        const problem = await fetchDailyProblem();
+        if(!problem) return;
 
-    async function startLevel() {
-        const text = await fetchWikiData(STATE.targetWord);
+        STATE.targetWord = problem.title;
+        const prepared = prepareText(problem.title, problem.text);
         
-        // 答えを隠す処理
-        // ここでは「答えの文字列」を特定のプレースホルダーに置換
-        // さらに、問題文として面白くするため、最初の200文字程度を使用
-        let cleanText = text.replace(/\n/g, ""); // 改行削除
-        if(cleanText.length > 300) cleanText = cleanText.substring(0, 300) + "...";
+        // Setup DOM
+        ELS.hintText.innerHTML = ""; // clear
+        STATE.totalChars = prepared.chars.length;
         
-        // 答えを隠蔽文字に置換 (文字数分)
-        const masked = cleanText.split(STATE.targetWord).join("█".repeat(STATE.targetWord.length));
-        
-        STATE.fullText = masked; // ここには「答えが伏せられた状態の全文」が入る
-        STATE.totalChars = masked.length;
-        
+        // Create invisible spans for all chars first
+        prepared.chars.forEach(item => {
+            const span = document.createElement("span");
+            if (item.isMasked) {
+                span.textContent = "🔒"; // 表示用
+                span.dataset.char = item.char; // 本来の文字（デバッグ用・あるいは正解後表示用）
+                span.className = "masked-word";
+            } else {
+                span.textContent = item.char;
+                span.style.opacity = "0"; // Initially hidden
+            }
+            ELS.hintText.appendChild(span);
+        });
+
         ELS.loading.style.display = 'none';
-        ELS.gameArea.style.display = 'flex';
-        
-        // 文字送り開始
+        ELS.gameArea.style.display = 'block';
+        ELS.charCountInfo.textContent = `文字数: ${STATE.targetWord.length}`;
+
         startReveal();
     }
 
     function startReveal() {
-        // 一定間隔で文字を表示していく
-        // 1文字ずつ `hint-box` に追加
-        ELS.hintText.textContent = "";
-        STATE.intervalId = setInterval(() => {
-            if (STATE.revealedCount < STATE.totalChars && !STATE.isGameOver) {
-                const char = STATE.fullText[STATE.revealedCount];
-                const span = document.createElement("span");
-                span.textContent = char;
-                span.className = "revealed-char";
-                
-                // 伏せ字の場合は色を変える等の装飾も可能
-                if(char === "█") {
-                    span.style.color = "#e74c3c"; // Red for hidden
-                }
+        const spans = ELS.hintText.querySelectorAll("span:not(.masked-word)");
+        const totalToReveal = spans.length;
+        let currentIndex = 0;
 
-                ELS.hintText.appendChild(span);
-                STATE.revealedCount++;
+        // 1文字あたりの速度調整: 全文を45秒くらいで出す
+        // speed = 45000ms / chars
+        let speed = 45000 / STATE.totalChars;
+        if(speed < 50) speed = 50; // 最速
+        if(speed > 200) speed = 200; // 最遅
+
+        STATE.intervalId = setInterval(() => {
+            if (currentIndex < totalToReveal && !STATE.isGameOver) {
+                const span = spans[currentIndex];
+                span.className = "revealed-char";
+                span.style.opacity = "1";
                 
-                // Update percentage
-                const pct = Math.floor((STATE.revealedCount / STATE.totalChars) * 100);
+                currentIndex++;
+                STATE.revealedCount++; // Note: masked words don't count as "revealed" action but are part of total
+                
+                // 全体の進捗率（マスク文字は最初から見えている扱いにはせず、時間経過の割合とする）
+                // 簡易的に： (現在のインデックス / 開くべき文字数) * 100
+                // ※マスク文字も含めた全体進捗にする
+                const currentTotalIndex = Array.from(ELS.hintText.children).indexOf(span);
+                const pct = Math.floor(((currentTotalIndex + 1) / STATE.totalChars) * 100);
                 ELS.percent.textContent = pct;
+
             } else {
                 clearInterval(STATE.intervalId);
+                if(!STATE.isGameOver && currentIndex >= totalToReveal) {
+                    // 全部開いた
+                    ELS.percent.textContent = 100;
+                }
             }
-        }, 150); // Speed: 150ms per char
+        }, speed);
     }
 
     function checkAnswer() {
@@ -458,19 +637,20 @@
         const userGuess = ELS.input.value.trim();
         if (!userGuess) return;
 
-        // Normalize
-        // 日本語なので、ひらがな/カタカナの違い等は許容したいが、
-        // 今回は「完全一致」を基本としつつ、空白削除のみ行う
-        if (userGuess === STATE.targetWord) {
+        // 判定ロジック
+        // 括弧などのゆらぎを許容する
+        const normalize = (str) => str.replace(/\s/g, "").replace(/[（(].*[）)]/g, "").toLowerCase();
+        
+        const targetNorm = normalize(STATE.targetWord);
+        const guessNorm = normalize(userGuess);
+
+        if (guessNorm === targetNorm && guessNorm.length > 0) {
             endGame(true);
         } else {
             STATE.attempts++;
-            ELS.status.textContent = `違うようだ... (誤答: ${STATE.attempts})`;
+            ELS.status.textContent = `不正解... (誤答数: ${STATE.attempts})`;
             ELS.status.className = "status-message error";
             ELS.input.value = "";
-            
-            // 誤答時のペナルティとして、文字を一気に少し進める？
-            // 今回はシンプルに何もしない
             ELS.input.classList.add("shake");
             setTimeout(() => ELS.input.classList.remove("shake"), 500);
         }
@@ -480,39 +660,37 @@
         STATE.isGameOver = true;
         clearInterval(STATE.intervalId);
         
-        // Calculate progress percentage at time of stop
-        const pct = Math.floor((STATE.revealedCount / STATE.totalChars) * 100);
+        // Calculate score
+        const currentPct = parseInt(ELS.percent.textContent) || 0;
         
-        // Save to LS
+        // Save
         const resultData = {
             success: success,
             attempts: STATE.attempts,
-            progress: pct,
+            progress: currentPct,
             word: STATE.targetWord
         };
-        localStorage.setItem(`wikimondo_${STATE.todayStr}`, JSON.stringify(resultData));
+        localStorage.setItem(`wikimondo_v2_${STATE.todayStr}`, JSON.stringify(resultData));
 
-        showResultModal(success, STATE.attempts, pct);
+        showResultModal(success, STATE.attempts, currentPct);
     }
 
     function showResultModal(success, attempts, progress) {
         ELS.modal.classList.add('active');
-        ELS.modalTitle.textContent = success ? "CLEAR!" : "GAME OVER";
+        ELS.modalTitle.textContent = success ? "CLEARED" : "FAILED";
         ELS.modalTitle.style.color = success ? "var(--accent-color)" : "var(--error-color)";
         
-        ELS.modalAnswer.textContent = STATE.targetWord || "(今日の問題を確認中...)";
-        
-        // もしLocalStorageから読み込んだ場合、STATE.targetWordが空の可能性があるため再取得
-        if(!STATE.targetWord) {
-             const saved = JSON.parse(localStorage.getItem(`wikimondo_${STATE.todayStr}`));
-             if(saved && saved.word) ELS.modalAnswer.textContent = saved.word;
-        }
+        // 答えがまだロードされてない場合（localstorage読み出し時など）
+        // STATE.targetWordがあればそれを使う
+        ELS.modalAnswer.textContent = STATE.targetWord;
 
         ELS.statProgress.textContent = progress + "%";
         ELS.statAttempts.textContent = attempts;
 
-        const wikiUrl = `https://ja.wikipedia.org/wiki/${encodeURIComponent(ELS.modalAnswer.textContent)}`;
-        ELS.wikiLink.href = wikiUrl;
+        // Wikipedia Button
+        ELS.wikiBtn.onclick = () => {
+            window.open(`https://ja.wikipedia.org/wiki/${encodeURIComponent(STATE.targetWord)}`, '_blank');
+        };
 
         setupShareButton(success, attempts, progress);
         setupTimer();
@@ -520,24 +698,35 @@
 
     function setupShareButton(success, attempts, progress) {
         ELS.shareBtn.onclick = () => {
-            const boxes = generateEmojiBar(progress);
-            const text = `WikiMondo ${STATE.todayStr}\n開示率: ${progress}%\n誤答: ${attempts}\n${boxes}\n#WikiMondo`;
+            // スコアに応じた絵文字バー
+            // 低い％で正解するほど偉いので、逆にする？
+            // いや、Mondoは開けた量なので、少ないほうがすごい。
+            // ここでは「開示率」＝「ヒント使用量」なので、少ないほうが優秀。
+            
+            const blocks = 5;
+            const filled = Math.ceil((progress / 100) * blocks); 
+            // 例: 20% -> 1個, 100% -> 5個
+            // 緑＝開いてしまった部分、黒＝隠せていた部分 と表現するか、
+            // 緑＝スコア（逆）とするか。
+            // 素直に「開いた量」を赤や黄色で示すのもありだが、シンプルに緑ブロックで量を示す。
+            
+            let bar = "";
+            for(let i=0; i<blocks; i++) {
+                if(i < filled) bar += "🟩";
+                else bar += "⬛";
+            }
+
+            const text = `WikiMondo ${STATE.todayStr}\n開示率: ${progress}% (誤答${attempts})\n${bar}\nhttps://your-github-username.github.io/wikimondo/`; 
+            // ↑ URLは自分のものに変えてください
+
             navigator.clipboard.writeText(text).then(() => {
-                ELS.shareBtn.textContent = "コピーしました！";
-                setTimeout(() => ELS.shareBtn.textContent = "結果をコピーして共有", 2000);
+                const originalText = ELS.shareBtn.innerText;
+                ELS.shareBtn.innerText = "コピーしました！";
+                setTimeout(() => ELS.shareBtn.innerText = originalText, 2000);
+            }).catch(err => {
+                alert("コピーに失敗しました");
             });
         };
-    }
-
-    function generateEmojiBar(percent) {
-        // 0-100% mapped to 5 blocks
-        const filled = Math.round(percent / 20);
-        let str = "";
-        for(let i=0; i<5; i++) {
-            if(i < filled) str += "🟩";
-            else str += "⬛";
-        }
-        return str;
     }
 
     function setupTimer() {
@@ -552,13 +741,13 @@
             const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const s = Math.floor((diff % (1000 * 60)) / 1000);
             
-            ELS.timer.textContent = `次の問題まで: ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            ELS.timer.textContent = `NEXT QUIZ: ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
         };
         setInterval(updateTimer, 1000);
         updateTimer();
     }
 
-    // --- Events ---
+    // --- Event Listeners ---
     ELS.btn.addEventListener('click', checkAnswer);
     ELS.input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') checkAnswer();
