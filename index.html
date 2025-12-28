@@ -10,8 +10,8 @@
             --paper-color: #fdfdfd;
             --text-color: #111;
             --mask-color: #222;
-            --locked-bg: #ccc;
-            --accent-color: #c62828;
+            --locked-bg: #bbb;
+            --accent-color: #d32f2f;
             --success-color: #2e7d32;
             --font-main: "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, monospace;
         }
@@ -60,15 +60,25 @@
             z-index: 500;
         }
 
-        .title-box { text-align: center; margin-bottom: 50px; }
+        .title-box { text-align: center; margin-bottom: 40px; }
         .title-box h1 { font-size: 3.5rem; margin: 0; color: #333; letter-spacing: 4px; font-weight: 900; }
-        .title-box p { color: #666; margin: 5px 0 0 0; font-weight: bold; letter-spacing: 2px; font-size: 0.9rem; }
+        .title-box p { color: #555; margin: 5px 0 0 0; font-weight: bold; letter-spacing: 2px; font-size: 0.9rem; }
 
-        /* Mission Select Grid */
+        .date-label {
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #444;
+            border-bottom: 2px solid #444;
+            padding-bottom: 5px;
+            width: 100%;
+            max-width: 500px;
+            text-align: left;
+        }
+
         .mission-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
+            gap: 12px;
             width: 100%;
             max-width: 500px;
             margin-bottom: 20px;
@@ -76,26 +86,39 @@
 
         .mission-btn {
             background: #fff;
-            border: 2px solid #333;
-            padding: 30px 10px;
+            border: 2px solid #444;
+            padding: 25px 5px;
             border-radius: 4px;
             text-align: center;
             cursor: pointer;
             transition: all 0.1s;
             font-weight: 900;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             color: #333;
-            box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.15);
+            position: relative;
         }
-        .mission-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(0,0,0,0.1); }
-        .mission-btn:hover { background: #f8f8f8; }
-
+        .mission-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(0,0,0,0.15); }
+        .mission-btn:hover { background: #f4f4f4; }
         .mission-btn span {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: normal;
-            color: #888;
-            margin-bottom: 5px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        /* クリア済みマーク */
+        .mission-btn.cleared::after {
+            content: "COMPLETE";
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            border: 2px solid var(--success-color);
+            color: var(--success-color);
+            font-size: 0.8rem;
+            padding: 2px 5px;
+            background: rgba(255,255,255,0.9);
+            pointer-events: none;
         }
 
         .free-btn {
@@ -112,17 +135,6 @@
             transition: all 0.2s;
         }
         .free-btn:hover { background: rgba(255,255,255,0.5); border-color: #333; color: #333; }
-
-        .date-label {
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #333;
-            border-bottom: 2px solid #333;
-            padding-bottom: 5px;
-            width: 100%;
-            max-width: 500px;
-            text-align: left;
-        }
 
         /* Game Screen Header */
         header {
@@ -141,7 +153,6 @@
             display: flex; justify-content: space-between; align-items: center;
             font-size: 0.9rem; flex-shrink: 0;
         }
-        .score-val { color: #4CAF50; font-weight: bold; margin-left: 5px; font-size: 1.1rem; }
 
         /* Game Area */
         .game-scroll-area {
@@ -149,7 +160,7 @@
             -webkit-overflow-scrolling: touch;
         }
         .paper {
-            background-color: var(--paper-color); padding: 20px 15px;
+            background-color: var(--paper-color); padding: 25px 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 4px; word-break: break-all;
         }
         
@@ -166,10 +177,9 @@
             cursor: pointer; text-align: center; position: relative; z-index: 5; border-radius: 0 0 4px 4px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        .show-more-btn:hover { background: #e0e0e0; }
         .show-more-btn.hidden { display: none; }
 
-        /* Unified Char Box */
+        /* Char Box */
         .doc-text { line-height: 1.8; font-size: 0; text-align: justify; }
         .char {
             display: inline-flex; justify-content: center; align-items: center;
@@ -251,11 +261,6 @@
             width: 100%; padding: 10px; margin-top: 10px;
         }
         
-        /* Map Toggle */
-        .map-toggle-btn {
-            background: #eee; color: #333; padding: 8px; width: 100%;
-            font-size: 0.9rem; margin-bottom: 10px; border: 1px solid #ccc;
-        }
         .visual-map {
             display: none; flex-wrap: wrap; gap: 1px; justify-content: center;
             margin: 10px 0; padding: 10px; background: #222; border-radius: 4px;
@@ -282,13 +287,13 @@
         <div class="date-label" id="menu-date-label"></div>
 
         <div class="mission-grid">
-            <div class="mission-btn" onclick="startGame('mission_a')">
+            <div class="mission-btn" id="btn-mission-a" onclick="startGame('mission_a')">
                 <span>MISSION</span>A
             </div>
-            <div class="mission-btn" onclick="startGame('mission_b')">
+            <div class="mission-btn" id="btn-mission-b" onclick="startGame('mission_b')">
                 <span>MISSION</span>B
             </div>
-            <div class="mission-btn" onclick="startGame('mission_c')">
+            <div class="mission-btn" id="btn-mission-c" onclick="startGame('mission_c')">
                 <span>MISSION</span>C
             </div>
         </div>
@@ -347,7 +352,7 @@
             </div>
         </div>
 
-        <button class="map-toggle-btn" onclick="toggleMap()">🗺️ 開示マップを表示 (Map)</button>
+        <button style="background:#eee;color:#333;padding:8px;width:100%;margin-bottom:10px;border:1px solid #ccc;" onclick="toggleMap()">🗺️ 開示マップ (Map)</button>
         <div id="visual-map" class="visual-map"></div>
 
         <button class="share-btn" id="share-btn">結果をコピー (Copy)</button>
@@ -414,8 +419,19 @@
     };
 
     // --- INIT ---
-    // Show today's date on menu
-    ELS.menuDate.textContent = new Date().toLocaleDateString('ja-JP');
+    // Check local storage to mark cleared missions
+    const todayStr = new Date().toLocaleDateString('ja-JP');
+    ELS.menuDate.textContent = todayStr;
+    ['A', 'B', 'C'].forEach(suffix => {
+        const key = todayStr + "_" + suffix;
+        const saved = localStorage.getItem(`wikimondo_score_v7_${key}`);
+        if(saved) {
+            const data = JSON.parse(saved);
+            if(data.cleared) {
+                document.getElementById(`btn-mission-${suffix.toLowerCase()}`).classList.add('cleared');
+            }
+        }
+    });
 
     window.startGame = function(modeKey) {
         const mode = MODES[modeKey];
@@ -427,11 +443,8 @@
 
         let seedStr;
         if (mode.seedType === "date") {
-            const today = new Date().toLocaleDateString('ja-JP');
-            seedStr = today + "_" + mode.seedSuffix; // e.g. "2024/5/20_A"
-            
-            // Check Save
-            const saved = localStorage.getItem(`wikimondo_score_v6_${seedStr}`);
+            seedStr = todayStr + "_" + mode.seedSuffix; 
+            const saved = localStorage.getItem(`wikimondo_score_v7_${seedStr}`);
             if(saved) {
                 restoreGame(JSON.parse(saved));
                 return;
@@ -499,71 +512,75 @@
         }, 50);
     }
 
-    // --- STRONG CENSORSHIP LOGIC ---
+    // -------------------------------------------------------------------
+    // 🔥 ENHANCED CENSORSHIP LOGIC (AGGRO)
+    // -------------------------------------------------------------------
     function processText(title, text) {
         const coreTitle = title.replace(/ \(.*\)/, "").replace(/（.*）/, "").trim();
         STATE.targetWord = coreTitle;
         STATE.validReadings = [coreTitle];
 
-        // 1. Initial Banned Words (Title components)
         const cleanTitle = title.replace(/ \(.*\)/, "").replace(/（.*）/, "").trim();
         STATE.targetDisplay = cleanTitle;
+        
+        // 1. Initial Banned Words (Split Title)
         const splitRegex = new RegExp(CONFIG.splitters.join("|"), "g");
         const parts = cleanTitle.split(splitRegex).map(s => s.trim());
         const banned = new Set();
         banned.add(cleanTitle);
         parts.forEach(p => { if (p.length >= CONFIG.minWordLen) banned.add(p); });
 
-        // 2. Scan Text for "Title (Reading)" pattern to find aliases/readings
-        // Detect: CoreTitle followed by parenthesis
-        const escapeReg = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const titleRegex = new RegExp(`(${escapeReg(coreTitle)})\\s*([（\\(].*?[）\\)])`, 'gi');
+        // 2. AGGRESSIVE READING EXTRACTION
+        // Look at the first 200 characters to find the FIRST parenthetical block.
+        // Usually: "Tokugawa Ieyasu (とくがわ いえやす)..."
+        const intro = text.substring(0, 300);
+        // Find first full-width or half-width parens
+        const firstParenMatch = intro.match(/[（\(](.*?)[）\)]/);
         
-        // Find ALL occurrences to capture readings, but usually the first one is definition
-        let match;
-        // Text scan loop to collect readings into banned set
-        // Clone text for regex scan to avoid issues? No, exec is stateful on regex obj.
-        // We create a new regex for scanning.
-        const scanRegex = new RegExp(`(${escapeReg(coreTitle)})\\s*([（\\(].*?[）\\)])`, 'gi');
-        while ((match = scanRegex.exec(text)) !== null) {
-            // content inside parenthesis: "とくがわ いえやす" or "Tokugawa Ieyasu"
-            const content = match[2].replace(/[（\(\)）]/g, "");
-            // Split by comma or Japanese comma
-            const readings = content.split(/[,、]/);
-            readings.forEach(r => {
-                const clean = r.trim();
-                if(clean) {
-                    STATE.validReadings.push(clean);
-                    banned.add(clean); // Add reading to banned words!
-                    // Also split reading by space (e.g. "Tokugawa Ieyasu" -> "Tokugawa", "Ieyasu")
-                    const subParts = clean.split(/[\s　]/);
-                    subParts.forEach(sp => { if(sp.length >= CONFIG.minWordLen) banned.add(sp); });
+        if (firstParenMatch) {
+            const content = firstParenMatch[1];
+            // Split content by commas, spaces, etc. to get individual reading parts
+            // e.g. "とくがわ いえやす, Tokugawa Ieyasu" -> ["とくがわ", "いえやす", "Tokugawa", "Ieyasu"]
+            const tokens = content.split(/[,、，\s　]+/);
+            tokens.forEach(t => {
+                const cleanT = t.trim();
+                if(cleanT.length >= 2) { // 2文字以上なら禁止ワードに追加
+                    banned.add(cleanT);
+                    STATE.validReadings.push(cleanT);
                 }
             });
+            // Also ban the entire content string just in case
+            banned.add(content);
         }
 
-        // Sort banned words by length (Longest first to avoid partial replacement issues)
+        // Sort banned words longest first
         const bannedWords = Array.from(banned).sort((a,b) => b.length - a.length);
 
-        // 3. Build Mask Ranges
+        // 3. Mask Ranges
         let maskRanges = [];
+        const escapeReg = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-        // A. Mask the "Title (Reading)" blocks themselves (Definition part)
-        // Reset regex
-        const defRegex = new RegExp(`(${escapeReg(coreTitle)})\\s*([（\\(].*?[）\\)])`, 'gi');
-        while ((match = defRegex.exec(text)) !== null) {
-            maskRanges.push({ start: match.index, end: match.index + match[0].length });
-        }
+        // A. Mask the Title itself (using split parts)
+        // (Handled by B because split parts are in bannedWords)
 
-        // B. Mask all banned words occurrences throughout text
+        // B. Mask all Banned Words everywhere
         bannedWords.forEach(word => {
             const wordReg = new RegExp(escapeReg(word), 'gi');
+            let m;
             while ((m = wordReg.exec(text)) !== null) {
                 maskRanges.push({ start: m.index, end: m.index + word.length });
             }
         });
 
-        // 4. Generate HTML
+        // C. Mask the FIRST PARENTHETICAL BLOCK explicitly (The definition area)
+        if (firstParenMatch) {
+             maskRanges.push({ 
+                start: firstParenMatch.index, 
+                end: firstParenMatch.index + firstParenMatch[0].length 
+            });
+        }
+
+        // 4. Build HTML
         let html = "";
         STATE.totalMaskable = 0; 
         STATE.revealHistory = new Array(text.length).fill(0); 
@@ -665,12 +682,11 @@
 
         const finalScore = isClear ? calculateScore() : 0;
 
-        // Save if Mission
         if(!isRestore && STATE.currentMode.startsWith('mission')) {
             const today = new Date().toLocaleDateString('ja-JP');
             const suffix = MODES[STATE.currentMode].seedSuffix;
             const key = today + "_" + suffix;
-            localStorage.setItem(`wikimondo_score_v6_${key}`, JSON.stringify({
+            localStorage.setItem(`wikimondo_score_v7_${key}`, JSON.stringify({
                 score: STATE.revealed,
                 word: STATE.targetWord,
                 cleared: isClear
