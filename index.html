@@ -3,385 +3,769 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wiki Downhill - Ultimate</title>
+    <title>WikiMondo</title>
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            --card-bg: rgba(255, 255, 255, 0.95);
-            --primary: #4A90E2;
-            --success: #00b894;
-            --danger: #d63031;
-            --text-main: #2d3436;
-            --text-sub: #636e72;
-            --font-main: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+            --bg-color: #e0e0e0;
+            --paper-color: #fdfdfd;
+            --text-color: #111;
+            --mask-color: #222;
+            --locked-bg: #bbb;
+            --accent-color: #d32f2f;
+            --success-color: #2e7d32;
+            --font-main: "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, monospace;
         }
+
+        * { box-sizing: border-box; }
 
         body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
             font-family: var(--font-main);
-            background: var(--bg-gradient);
             margin: 0;
-            min-height: 100vh;
+            padding: 0;
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overscroll-behavior-y: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* --- Screens --- */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+        .screen.hidden { display: none; }
+
+        /* Start Screen */
+        #start-screen {
             justify-content: center;
             align-items: center;
-            color: var(--text-main);
-            overflow-x: hidden;
+            padding: 20px;
+            z-index: 500;
         }
 
-        .game-container {
-            width: 100%;
-            max-width: 480px;
-            background: var(--card-bg);
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-            padding: 30px 20px;
-            box-sizing: border-box;
-            margin: 20px;
-            position: relative;
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s;
-        }
+        .title-box { text-align: center; margin-bottom: 40px; }
+        .title-box h1 { font-size: 3.5rem; margin: 0; color: #333; letter-spacing: 4px; font-weight: 900; }
+        .title-box p { color: #555; margin: 5px 0 0 0; font-weight: bold; letter-spacing: 2px; font-size: 0.9rem; }
 
-        header { text-align: center; margin-bottom: 25px; }
-        h1 { margin: 0; font-size: 1.8rem; letter-spacing: -0.5px; background: linear-gradient(45deg, #4A90E2, #8e44ad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .subtitle { font-size: 0.85rem; color: var(--text-sub); margin-top: 5px; }
-
-        .stats-row {
-            display: flex;
-            justify-content: space-between;
-            background: #f1f2f6;
-            padding: 10px 20px;
-            border-radius: 16px;
-            margin-bottom: 25px;
+        .date-label {
+            margin-bottom: 15px;
             font-weight: bold;
-            font-size: 0.9rem;
-        }
-        .stat-item span { color: var(--primary); font-size: 1.1rem; margin-left: 5px; }
-
-        .target-display {
-            text-align: center;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        .target-label { font-size: 0.75rem; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; }
-        .target-number { 
-            font-size: 3.5rem; 
-            font-weight: 800; 
-            line-height: 1.1; 
-            margin: 10px 0; 
-            font-variant-numeric: tabular-nums; 
-            transition: color 0.3s;
-        }
-        .target-word { 
-            font-size: 1.2rem; 
-            font-weight: bold; 
-            color: var(--primary);
-            padding: 5px 15px;
-            background: rgba(74, 144, 226, 0.1);
-            border-radius: 20px;
-            display: inline-block;
-        }
-
-        .input-area { position: relative; margin-bottom: 15px; }
-        input[type="text"] {
+            color: #444;
+            border-bottom: 2px solid #444;
+            padding-bottom: 5px;
             width: 100%;
-            padding: 16px;
-            font-size: 1.1rem;
-            border: 2px solid #dfe6e9;
-            border-radius: 16px;
-            box-sizing: border-box;
-            outline: none;
-            transition: all 0.3s;
-            appearance: none;
-        }
-        input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.15); }
-        
-        button {
-            width: 100%;
-            padding: 16px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: white;
-            background: var(--primary);
-            border: none;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: transform 0.1s, background 0.3s;
-            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
-            -webkit-tap-highlight-color: transparent;
-        }
-        button:active { transform: scale(0.98); }
-        button:disabled { background: #b2bec3; cursor: not-allowed; box-shadow: none; transform: none; }
-        
-        .btn-restart { background: var(--text-main); margin-top: 10px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-
-        .message-box { min-height: 24px; text-align: center; margin: 15px 0; font-size: 0.95rem; font-weight: bold; }
-        .error-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; color: var(--danger); }
-        .success-pop { animation: pop 0.3s ease; color: var(--success); }
-
-        .history-list {
-            margin-top: 20px;
-            border-top: 2px solid #f1f2f6;
-            padding-top: 15px;
-            max-height: 200px;
-            overflow-y: auto;
+            max-width: 500px;
             text-align: left;
         }
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #f9f9f9;
-            font-size: 0.9rem;
-            animation: slideDown 0.3s ease forwards;
+
+        .mission-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
         }
-        .history-word { font-weight: bold; }
-        .history-val { color: var(--text-sub); font-family: monospace; font-size: 1rem; }
 
-        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
-        @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .mission-btn {
+            background: #fff;
+            border: 2px solid #444;
+            padding: 25px 5px;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.1s;
+            font-weight: 900;
+            font-size: 1.4rem;
+            color: #333;
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.15);
+            position: relative;
+        }
+        .mission-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(0,0,0,0.15); }
+        .mission-btn:hover { background: #f4f4f4; }
+        .mission-btn span {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: normal;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        /* クリア済みマーク */
+        .mission-btn.cleared::after {
+            content: "COMPLETE";
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            border: 2px solid var(--success-color);
+            color: var(--success-color);
+            font-size: 0.8rem;
+            padding: 2px 5px;
+            background: rgba(255,255,255,0.9);
+            pointer-events: none;
+        }
 
-        .game-over .target-number { color: var(--danger); text-decoration: line-through; }
+        .free-btn {
+            width: 100%;
+            max-width: 500px;
+            background: transparent;
+            border: 2px solid #666;
+            color: #555;
+            padding: 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .free-btn:hover { background: rgba(255,255,255,0.5); border-color: #333; color: #333; }
+
+        /* Game Screen Header */
+        header {
+            padding: 10px 15px; background: #e0e0e0; border-bottom: 1px solid #bbb;
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+        }
+        h1.game-title { font-size: 1.2rem; margin: 0; font-weight: 800; color: #333; }
+        .stamp {
+            border: 2px solid var(--accent-color); color: var(--accent-color); font-weight: bold;
+            padding: 2px 8px; transform: rotate(-5deg); font-size: 0.7rem; opacity: 0.8;
+        }
+
+        /* Stats Bar */
+        .stats-panel {
+            background: #333; color: #fff; padding: 8px 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.9rem; flex-shrink: 0;
+        }
+
+        /* Game Area */
+        .game-scroll-area {
+            flex-grow: 1; overflow-y: auto; padding: 20px 15px 140px 15px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .paper {
+            background-color: var(--paper-color); padding: 25px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 4px; word-break: break-all;
+        }
+        
+        .doc-container { position: relative; transition: max-height 0.5s ease; }
+        .doc-container.collapsed { max-height: 50vh; overflow: hidden; }
+        .doc-container.collapsed::after {
+            content: ""; position: absolute; bottom: 0; left: 0; width: 100%; height: 120px;
+            background: linear-gradient(to bottom, rgba(253,253,253,0), var(--paper-color) 90%); pointer-events: none;
+        }
+        
+        .show-more-btn {
+            display: block; width: 100%; margin-top: -30px; padding: 20px;
+            background: #eee; border: 1px solid #ccc; color: #333; font-weight: bold;
+            cursor: pointer; text-align: center; position: relative; z-index: 5; border-radius: 0 0 4px 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .show-more-btn.hidden { display: none; }
+
+        /* Char Box */
+        .doc-text { line-height: 1.8; font-size: 0; text-align: justify; }
+        .char {
+            display: inline-flex; justify-content: center; align-items: center;
+            width: 26px; height: 32px; font-size: 16px; margin: 1px;
+            border-radius: 2px; user-select: none; vertical-align: middle;
+            background-color: transparent; color: var(--text-color);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .char.hidden {
+            background-color: var(--mask-color); color: transparent;
+            cursor: pointer; touch-action: manipulation;
+        }
+        @media (hover: hover) {
+            .char.hidden:hover { transform: scale(1.15); background-color: #444; z-index:2; position:relative; }
+        }
+        .char.revealed {
+            background-color: #f0f0f0; color: var(--text-color);
+            animation: textIn 0.3s forwards; font-weight: bold;
+        }
+        .char.locked {
+            background-color: var(--locked-bg); color: transparent;
+            border: 1px dashed #999; cursor: not-allowed; position: relative;
+        }
+        .char.locked::after { content: "×"; font-size: 10px; color: #777; }
+        .char-break { display: block; height: 15px; }
+        @keyframes textIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Footer */
+        .footer-area {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(245,245,245,0.95); backdrop-filter: blur(5px);
+            border-top: 1px solid #ccc; padding: 10px; z-index: 100;
+            display: flex; flex-direction: column; gap: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        #hint-container { display: flex; justify-content: center; gap: 4px; margin-bottom: 5px; }
+        .hint-char {
+            width: 30px; height: 35px; border: 2px solid #999; background: #fff;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 1.1rem; color: #333; border-radius: 4px;
+        }
+        .hint-char.match { background-color: var(--success-color); border-color: var(--success-color); color: #fff; }
+        .input-group { display: flex; width: 100%; max-width: 600px; margin: 0 auto; gap: 8px; }
+        input[type="text"] {
+            flex: 1; padding: 12px; font-size: 16px; border: 2px solid #999;
+            border-radius: 6px; outline: none; -webkit-appearance: none;
+        }
+        input[type="text"]:focus { border-color: #333; }
+        button { border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; padding: 0 15px; }
+        .btn-submit { background: #222; color: #fff; flex-shrink: 0; }
+        .btn-giveup { background: #e0e0e0; color: #555; font-size: 0.8rem; flex-shrink: 0; }
+
+        /* Loading & Modal */
+        #loading { margin-top: 40vh; text-align: center; color: #666; font-weight: bold; }
+        .modal-wrap {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center;
+            opacity:0; pointer-events:none; transition:opacity 0.3s; z-index: 2000;
+        }
+        .modal-wrap.active { opacity:1; pointer-events:auto; }
+        .modal-box {
+            background: #fff; padding: 25px; width: 90%; max-width: 400px;
+            border-radius: 12px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .answer-reveal {
+            font-size: 1.4rem; border-bottom: 2px solid #ddd; margin: 15px 0;
+            padding-bottom: 10px; font-weight: 900; word-break: break-all;
+        }
+        .score-display-box {
+            background:#f5f5f5; padding:15px; border-radius:6px; margin-bottom: 15px;
+        }
+        .share-btn {
+            background: #333; color: #fff; width: 100%; padding: 15px;
+            margin-top: 10px; font-size: 1rem;
+        }
+        .back-btn {
+            background: transparent; border: 1px solid #999; color: #555;
+            width: 100%; padding: 10px; margin-top: 10px;
+        }
+        
+        .visual-map {
+            display: none; flex-wrap: wrap; gap: 1px; justify-content: center;
+            margin: 10px 0; padding: 10px; background: #222; border-radius: 4px;
+            max-height: 200px; overflow-y: auto;
+        }
+        .visual-map.active { display: flex; }
+        .map-dot { width: 8px; height: 8px; border-radius: 1px; }
+        .map-dot.hidden { background: #444; }
+        .map-dot.revealed { background: #d32f2f; }
+        .map-dot.locked { background: #777; }
+
     </style>
 </head>
 <body>
 
-<div class="game-container" id="container">
-    <header>
-        <h1>📉 Wiki Downhill</h1>
-        <div class="subtitle">直近30日間の閲覧数を下げ続けろ</div>
-    </header>
-
-    <div class="stats-row">
-        <div class="stat-item">SCORE: <span id="score">0</span></div>
-        <div class="stat-item">BEST: <span id="best-score">0</span></div>
-    </div>
-
-    <div class="target-display">
-        <div class="target-label">CURRENT TARGET (LESS THAN)</div>
-        <div class="target-number" id="target-value">∞</div>
-        <div class="target-word" id="target-word">START</div>
-    </div>
-
-    <div class="input-area">
-        <input type="text" id="keyword" list="suggestions" placeholder="単語を入力 (例: 日本)" autocomplete="off">
-        <datalist id="suggestions"></datalist>
-    </div>
-
-    <button id="submit-btn">勝負する</button>
+<div class="container">
     
-    <div class="message-box" id="msg"></div>
+    <div id="start-screen" class="screen">
+        <div class="title-box">
+            <h1>WIKIMONDO</h1>
+            <p>CLASSIFIED DOCUMENTS</p>
+        </div>
+        
+        <div class="date-label" id="menu-date-label"></div>
 
-    <button id="restart-btn" class="btn-restart">もう一度挑戦</button>
+        <div class="mission-grid">
+            <div class="mission-btn" id="btn-mission-a" onclick="startGame('mission_a')">
+                <span>MISSION</span>A
+            </div>
+            <div class="mission-btn" id="btn-mission-b" onclick="startGame('mission_b')">
+                <span>MISSION</span>B
+            </div>
+            <div class="mission-btn" id="btn-mission-c" onclick="startGame('mission_c')">
+                <span>MISSION</span>C
+            </div>
+        </div>
 
-    <div class="history-list" id="history"></div>
+        <button class="free-btn" onclick="startGame('free')">
+            ∞ ENDLESS TRAINING
+        </button>
+    </div>
+
+    <div id="game-screen" class="screen hidden">
+        <header>
+            <h1 class="game-title">WikiMondo</h1>
+            <div class="stamp">CONFIDENTIAL</div>
+        </header>
+
+        <div class="stats-panel">
+            <div style="font-size: 0.8rem;">
+                SCORE: <span id="current-score" style="color:#4CAF50; font-size:1.1rem; font-weight:bold;">10000</span>
+                <span style="color:#888; margin-left:5px;">(開示: <span id="revealed-count">0</span>)</span>
+            </div>
+            <div id="mode-label" style="font-size:0.9rem; font-weight:bold; color:#fff;"></div>
+        </div>
+
+        <div id="loading">Retrieving Data...</div>
+
+        <div class="game-scroll-area" id="game-view" style="display:none;">
+            <div class="paper">
+                <div id="doc-container" class="doc-container collapsed">
+                    <div id="doc-content" class="doc-text"></div>
+                </div>
+                <button id="show-more-btn" class="show-more-btn">⇩ 続きを読む (全文展開)</button>
+            </div>
+        </div>
+
+        <div class="footer-area" id="footer-area" style="display:none;">
+            <div id="hint-container" style="display:none;"></div>
+            <div class="input-group">
+                <button class="btn-giveup" id="giveup-btn">降参</button>
+                <input type="text" id="guess-input" placeholder="タイトルを推測..." autocomplete="off">
+                <button class="btn-submit" id="submit-btn">回答</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-wrap" id="result-modal">
+    <div class="modal-box">
+        <h2 id="modal-result-title" style="margin:0; color:#333;">REPORT</h2>
+        <div class="answer-reveal" id="modal-answer"></div>
+        
+        <div class="score-display-box">
+            <div style="font-size:0.8rem; color:#666;">FINAL SCORE</div>
+            <div style="font-size:2.5rem; font-weight:900; color:#333; line-height:1;" id="final-score">0</div>
+            <div style="font-size:0.8rem; color:#888; margin-top:5px;">
+                開示数: <span id="final-revealed">0</span> / <span id="total-maskable">0</span>
+            </div>
+        </div>
+
+        <button style="background:#eee;color:#333;padding:8px;width:100%;margin-bottom:10px;border:1px solid #ccc;" onclick="toggleMap()">🗺️ 開示マップ (Map)</button>
+        <div id="visual-map" class="visual-map"></div>
+
+        <button class="share-btn" id="share-btn">結果をコピー (Copy)</button>
+        <button class="back-btn" onclick="location.reload()">タイトルに戻る</button>
+    </div>
 </div>
 
 <script>
-    // --- 状態管理 ---
+    const CONFIG = {
+        api: "https://ja.wikipedia.org/w/api.php",
+        splitters: ["における", "による", "としての", "からの", "への", "・", " ", "　", "の", "と", "は", "が", "を"],
+        minWordLen: 2,
+        hintThreshold: 5,
+        maxScore: 10000
+    };
+
+    const MODES = {
+        mission_a: { category: "Category:良質な記事", seedType: "date", seedSuffix: "A", label: "MISSION A" },
+        mission_b: { category: "Category:良質な記事", seedType: "date", seedSuffix: "B", label: "MISSION B" },
+        mission_c: { category: "Category:良質な記事", seedType: "date", seedSuffix: "C", label: "MISSION C" },
+        free:      { category: "Category:良質な記事", seedType: "random", seedSuffix: "",  label: "FREE PLAY" }
+    };
+
     const STATE = {
-        lastValue: Infinity,
-        score: 0,
-        bestScore: localStorage.getItem('wiki_downhill_best') || 0,
-        history: []
+        currentMode: null,
+        seedVal: 0,
+        targetWord: "",
+        targetDisplay: "",
+        validReadings: [],
+        revealed: 0,
+        totalMaskable: 0,
+        wrongAttempts: 0,
+        gameOver: false,
+        hintActive: false,
+        matchedChars: [],
+        revealHistory: []
     };
 
-    // --- DOM要素 ---
-    const UI = {
-        container: document.getElementById('container'),
-        input: document.getElementById('keyword'),
-        submitBtn: document.getElementById('submit-btn'),
-        restartBtn: document.getElementById('restart-btn'),
-        targetValue: document.getElementById('target-value'),
-        targetWord: document.getElementById('target-word'),
-        score: document.getElementById('score'),
-        bestScore: document.getElementById('best-score'),
-        msg: document.getElementById('msg'),
-        history: document.getElementById('history'),
-        datalist: document.getElementById('suggestions')
+    const ELS = {
+        startScreen: document.getElementById('start-screen'),
+        gameScreen: document.getElementById('game-screen'),
+        menuDate: document.getElementById('menu-date-label'),
+        loading: document.getElementById('loading'),
+        gameView: document.getElementById('game-view'),
+        docContainer: document.getElementById('doc-container'),
+        docContent: document.getElementById('doc-content'),
+        showMoreBtn: document.getElementById('show-more-btn'),
+        footer: document.getElementById('footer-area'),
+        hintContainer: document.getElementById('hint-container'),
+        input: document.getElementById('guess-input'),
+        btn: document.getElementById('submit-btn'),
+        giveup: document.getElementById('giveup-btn'),
+        currScore: document.getElementById('current-score'),
+        revCount: document.getElementById('revealed-count'),
+        modeLabel: document.getElementById('mode-label'),
+        modal: document.getElementById('result-modal'),
+        mTitle: document.getElementById('modal-result-title'),
+        mAnswer: document.getElementById('modal-answer'),
+        fScore: document.getElementById('final-score'),
+        fRevealed: document.getElementById('final-revealed'),
+        fTotal: document.getElementById('total-maskable'),
+        visualMap: document.getElementById('visual-map'),
+        share: document.getElementById('share-btn')
     };
 
-    // 初期表示
-    UI.bestScore.textContent = STATE.bestScore;
-
-    // --- Wikipedia API (精度重視) ---
-    async function fetchSuggestions(query) {
-        if (!query) return;
-        try {
-            const url = `https://ja.wikipedia.org/w/api.php?action=opensearch&format=json&origin=*&search=${encodeURIComponent(query)}&limit=5`;
-            const res = await fetch(url);
-            const data = await res.json();
-            return data[1] || [];
-        } catch(e) { return []; }
-    }
-
-    async function fetchTotalViews(title) {
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() - 2); 
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 32); 
-
-        const formatDate = d => d.toISOString().slice(0, 10).replace(/-/g, '');
-        const url = `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/ja.wikipedia/all-access/all-agents/${encodeURIComponent(title)}/daily/${formatDate(startDate)}/${formatDate(endDate)}`;
-
-        try {
-            const res = await fetch(url);
-            if (res.status === 404) return null;
-            const data = await res.json();
-            if (!data.items || data.items.length === 0) return null;
-            return data.items.reduce((acc, curr) => acc + curr.views, 0);
-        } catch (e) {
-            return null;
+    // --- INIT ---
+    // Check local storage to mark cleared missions
+    const todayStr = new Date().toLocaleDateString('ja-JP');
+    ELS.menuDate.textContent = todayStr;
+    ['A', 'B', 'C'].forEach(suffix => {
+        const key = todayStr + "_" + suffix;
+        const saved = localStorage.getItem(`wikimondo_score_v7_${key}`);
+        if(saved) {
+            const data = JSON.parse(saved);
+            if(data.cleared) {
+                document.getElementById(`btn-mission-${suffix.toLowerCase()}`).classList.add('cleared');
+            }
         }
-    }
-
-    // --- 演出系ロジック ---
-    function animateValue(element, start, end, duration) {
-        if (start === "∞") start = end * 1.5; 
-        let startTimestamp = null;
-        const step = (timestamp) => {
-            if (!startTimestamp) startTimestamp = timestamp;
-            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            const currentVal = Math.floor(progress * (end - start) + start);
-            element.textContent = currentVal.toLocaleString();
-            if (progress < 1) {
-                window.requestAnimationFrame(step);
-            } else {
-                element.textContent = end.toLocaleString();
-            }
-        };
-        window.requestAnimationFrame(step);
-    }
-
-    // --- ゲームロジック ---
-    let debounceTimer;
-    UI.input.addEventListener('input', (e) => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(async () => {
-            const val = e.target.value.trim();
-            if(val.length > 0) {
-                const list = await fetchSuggestions(val);
-                UI.datalist.innerHTML = '';
-                list.forEach(item => {
-                    const opt = document.createElement('option');
-                    opt.value = item;
-                    UI.datalist.appendChild(opt);
-                });
-            }
-        }, 300);
     });
 
-    async function handleTurn() {
-        const word = UI.input.value.trim();
-        if (!word) return;
+    window.startGame = function(modeKey) {
+        const mode = MODES[modeKey];
+        STATE.currentMode = modeKey;
+        
+        ELS.startScreen.classList.add('hidden');
+        ELS.gameScreen.classList.remove('hidden');
+        ELS.modeLabel.textContent = mode.label;
 
-        UI.submitBtn.disabled = true;
-        UI.submitBtn.textContent = "データ取得中...";
-        UI.input.disabled = true;
-        UI.msg.textContent = "";
-        UI.msg.className = "message-box";
-
-        const views = await fetchTotalViews(word);
-
-        if (views === null) {
-            UI.msg.textContent = `⚠️ 「${word}」が見つかりません。正確な記事名を入れてください。`;
-            UI.msg.classList.add("error-shake");
-            resetInputState();
-            return;
-        }
-
-        if (views < STATE.lastValue) {
-            successTurn(word, views);
+        let seedStr;
+        if (mode.seedType === "date") {
+            seedStr = todayStr + "_" + mode.seedSuffix; 
+            const saved = localStorage.getItem(`wikimondo_score_v7_${seedStr}`);
+            if(saved) {
+                restoreGame(JSON.parse(saved));
+                return;
+            }
         } else {
-            gameOver(word, views);
-        }
-    }
-
-    function successTurn(word, views) {
-        STATE.score++;
-        UI.score.textContent = STATE.score;
-
-        const prev = STATE.lastValue === Infinity ? views * 2 : STATE.lastValue;
-        animateValue(UI.targetValue, prev, views, 800);
-        
-        STATE.lastValue = views;
-        UI.targetWord.textContent = word;
-
-        UI.msg.textContent = "✅ ナイス！次へ進もう";
-        UI.msg.classList.add("success-pop");
-
-        addHistory(word, views, true);
-        
-        UI.input.value = "";
-        resetInputState();
-        UI.submitBtn.textContent = "勝負する";
-    }
-
-    function gameOver(word, views) {
-        UI.container.classList.add("game-over");
-        UI.targetValue.textContent = STATE.lastValue.toLocaleString();
-        
-        UI.msg.innerHTML = `💀 <b>ドボン！</b><br>「${word}」は ${views.toLocaleString()} viewsでした。<br>(${STATE.lastValue.toLocaleString()}より小さい必要があります)`;
-        UI.msg.className = "message-box error-shake";
-
-        addHistory(word, views, false);
-
-        if (STATE.score > STATE.bestScore) {
-            STATE.bestScore = STATE.score;
-            localStorage.setItem('wiki_downhill_best', STATE.score);
-            UI.bestScore.textContent = STATE.score;
-            UI.msg.innerHTML += "<br>🏆 <b>NEW RECORD!</b>";
+            seedStr = Date.now().toString() + Math.random().toString();
         }
 
-        UI.submitBtn.style.display = "none";
-        UI.input.style.display = "none";
-        UI.restartBtn.style.display = "block";
+        const seedFunc = xmur3(seedStr);
+        STATE.seedVal = mulberry32(seedFunc());
+
+        fetchProblem(mode.category).then(data => initGame(data));
+    };
+
+    function xmur3(str) {
+        let h = 1779033703 ^ str.length;
+        for(let i=0; i<str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 3432918353), h = h << 13 | h >>> 19;
+        return function() { h = Math.imul(h ^ (h >>> 16), 2246822507), h = Math.imul(h ^ (h >>> 13), 3266489909); return (h ^= h >>> 16) >>> 0; }
+    }
+    function mulberry32(a) {
+        return function() { var t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }
     }
 
-    function addHistory(word, views, isSuccess) {
-        const div = document.createElement("div");
-        div.className = "history-item";
-        div.style.color = isSuccess ? "inherit" : "var(--danger)";
-        div.innerHTML = `
-            <span class="history-word">${word}</span>
-            <span class="history-val">${views.toLocaleString()}</span>
-        `;
-        UI.history.prepend(div);
+    async function fetchProblem(category) {
+        const chars = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわ";
+        const startChar = chars[Math.floor(STATE.seedVal() * chars.length)];
+        try {
+            const listUrl = `${CONFIG.api}?action=query&list=categorymembers&cmtitle=${encodeURIComponent(category)}&cmtype=page&cmsort=sortkey&cmstartsortkey=${encodeURIComponent(startChar)}&cmlimit=50&format=json&origin=*`;
+            const res = await fetch(listUrl);
+            const data = await res.json();
+            let cands = (data.query?.categorymembers || []).filter(i => i.title.length >= 3 && !i.title.includes("一覧"));
+            if(!cands.length) return fetchFixed("インターネット");
+            const choice = cands[Math.floor(STATE.seedVal() * cands.length)];
+            return await fetchDetails(choice.title);
+        } catch(e) { return fetchFixed("人工知能"); }
     }
-
-    function resetInputState() {
-        UI.submitBtn.disabled = false;
-        UI.submitBtn.textContent = "勝負する";
-        UI.input.disabled = false;
-        UI.input.focus();
-    }
-
-    function restartGame() {
-        STATE.lastValue = Infinity;
-        STATE.score = 0;
-        UI.score.textContent = "0";
-        UI.targetValue.textContent = "∞";
-        UI.targetWord.textContent = "START";
-        UI.msg.textContent = "";
-        UI.history.innerHTML = "";
-        UI.input.value = "";
-        
-        UI.container.classList.remove("game-over");
-        UI.submitBtn.style.display = "block";
-        UI.input.style.display = "block";
-        UI.restartBtn.style.display = "none";
-        
-        resetInputState();
-    }
-
-    UI.submitBtn.addEventListener('click', handleTurn);
-    UI.restartBtn.addEventListener('click', restartGame);
-    UI.input.addEventListener('keypress', (e) => {
-        if(e.key === 'Enter') handleTurn();
-    });
     
-    UI.input.focus();
+    async function fetchFixed(title) { return await fetchDetails(title); }
+    
+    async function fetchDetails(title) {
+        const url = `${CONFIG.api}?action=query&format=json&prop=extracts&explaintext&exchars=20000&origin=*&titles=${encodeURIComponent(title)}`;
+        const res = await fetch(url);
+        const json = await res.json();
+        const pages = json.query.pages;
+        const pageId = Object.keys(pages)[0];
+        return { title: title, text: pages[pageId].extract };
+    }
+
+    // --- GAME LOGIC ---
+    function initGame(data) {
+        setTimeout(() => {
+            const html = processText(data.title, data.text);
+            ELS.docContent.innerHTML = html;
+            ELS.loading.style.display = 'none';
+            ELS.gameView.style.display = 'block';
+            ELS.footer.style.display = 'flex';
+            updateScoreUI();
+            
+            setTimeout(() => {
+                if (ELS.docContent.scrollHeight < window.innerHeight * 0.7) {
+                    ELS.docContainer.classList.remove('collapsed');
+                    ELS.showMoreBtn.classList.add('hidden');
+                }
+            }, 100);
+        }, 50);
+    }
+
+    // -------------------------------------------------------------------
+    // 🔥 ENHANCED CENSORSHIP LOGIC (AGGRO)
+    // -------------------------------------------------------------------
+    function processText(title, text) {
+        const coreTitle = title.replace(/ \(.*\)/, "").replace(/（.*）/, "").trim();
+        STATE.targetWord = coreTitle;
+        STATE.validReadings = [coreTitle];
+
+        const cleanTitle = title.replace(/ \(.*\)/, "").replace(/（.*）/, "").trim();
+        STATE.targetDisplay = cleanTitle;
+        
+        // 1. Initial Banned Words (Split Title)
+        const splitRegex = new RegExp(CONFIG.splitters.join("|"), "g");
+        const parts = cleanTitle.split(splitRegex).map(s => s.trim());
+        const banned = new Set();
+        banned.add(cleanTitle);
+        parts.forEach(p => { if (p.length >= CONFIG.minWordLen) banned.add(p); });
+
+        // 2. AGGRESSIVE READING EXTRACTION
+        // Look at the first 200 characters to find the FIRST parenthetical block.
+        // Usually: "Tokugawa Ieyasu (とくがわ いえやす)..."
+        const intro = text.substring(0, 300);
+        // Find first full-width or half-width parens
+        const firstParenMatch = intro.match(/[（\(](.*?)[）\)]/);
+        
+        if (firstParenMatch) {
+            const content = firstParenMatch[1];
+            // Split content by commas, spaces, etc. to get individual reading parts
+            // e.g. "とくがわ いえやす, Tokugawa Ieyasu" -> ["とくがわ", "いえやす", "Tokugawa", "Ieyasu"]
+            const tokens = content.split(/[,、，\s　]+/);
+            tokens.forEach(t => {
+                const cleanT = t.trim();
+                if(cleanT.length >= 2) { // 2文字以上なら禁止ワードに追加
+                    banned.add(cleanT);
+                    STATE.validReadings.push(cleanT);
+                }
+            });
+            // Also ban the entire content string just in case
+            banned.add(content);
+        }
+
+        // Sort banned words longest first
+        const bannedWords = Array.from(banned).sort((a,b) => b.length - a.length);
+
+        // 3. Mask Ranges
+        let maskRanges = [];
+        const escapeReg = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // A. Mask the Title itself (using split parts)
+        // (Handled by B because split parts are in bannedWords)
+
+        // B. Mask all Banned Words everywhere
+        bannedWords.forEach(word => {
+            const wordReg = new RegExp(escapeReg(word), 'gi');
+            let m;
+            while ((m = wordReg.exec(text)) !== null) {
+                maskRanges.push({ start: m.index, end: m.index + word.length });
+            }
+        });
+
+        // C. Mask the FIRST PARENTHETICAL BLOCK explicitly (The definition area)
+        if (firstParenMatch) {
+             maskRanges.push({ 
+                start: firstParenMatch.index, 
+                end: firstParenMatch.index + firstParenMatch[0].length 
+            });
+        }
+
+        // 4. Build HTML
+        let html = "";
+        STATE.totalMaskable = 0; 
+        STATE.revealHistory = new Array(text.length).fill(0); 
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            if (char === '\n') { html += '<div class="char-break"></div>'; continue; }
+            if (char === ' ' || char === '　') { html += '<span class="char" style="opacity:0"> </span>'; continue; }
+
+            const isLocked = maskRanges.some(r => i >= r.start && i < r.end);
+            if (isLocked) {
+                html += `<span class="char locked"></span>`;
+                STATE.revealHistory[i] = 2; 
+            } else {
+                html += `<span class="char hidden" data-index="${i}" onclick="reveal(this)">${char}</span>`;
+                STATE.totalMaskable++;
+                STATE.revealHistory[i] = 1; 
+            }
+        }
+        return html;
+    }
+
+    function calculateScore() {
+        if(STATE.totalMaskable === 0) return CONFIG.maxScore;
+        const ratio = (STATE.totalMaskable - STATE.revealed) / STATE.totalMaskable;
+        const score = Math.floor(CONFIG.maxScore * ratio);
+        return Math.max(0, score);
+    }
+
+    function updateScoreUI() {
+        ELS.currScore.textContent = calculateScore();
+        ELS.revCount.textContent = STATE.revealed;
+    }
+
+    window.reveal = function(el) {
+        if(STATE.gameOver || el.classList.contains('revealed')) return;
+        el.className = "char revealed";
+        STATE.revealed++;
+        const idx = parseInt(el.getAttribute('data-index'));
+        STATE.revealHistory[idx] = 3; 
+        updateScoreUI();
+    };
+
+    function checkAnswer() {
+        if(STATE.gameOver) return;
+        const raw = ELS.input.value.trim();
+        if(!raw) return;
+        const norm = raw.toLowerCase().replace(/\s/g, "");
+        const correct = STATE.validReadings.some(v => v.toLowerCase().replace(/\s/g, "") === norm);
+        if(correct) endGame(true);
+        else handleWrong(raw);
+    }
+
+    function handleWrong(input) {
+        STATE.wrongAttempts++;
+        ELS.input.style.borderColor = "#c62828";
+        ELS.input.classList.add('shake');
+        setTimeout(() => { ELS.input.style.borderColor = "#999"; ELS.input.classList.remove('shake'); }, 500);
+        ELS.input.value = "";
+        if(STATE.wrongAttempts >= CONFIG.hintThreshold) activateHint(input);
+    }
+
+    function activateHint(lastInput) {
+        STATE.hintActive = true;
+        ELS.hintContainer.style.display = 'flex';
+        if(ELS.hintContainer.children.length === 0) {
+            for(let i=0; i<STATE.targetDisplay.length; i++) {
+                const b = document.createElement("div");
+                b.className = "hint-char";
+                b.textContent = "？";
+                ELS.hintContainer.appendChild(b);
+                STATE.matchedChars.push(false);
+            }
+        }
+        const boxes = ELS.hintContainer.children;
+        const target = STATE.targetDisplay;
+        for(let i=0; i<target.length; i++) {
+            if(STATE.matchedChars[i]) {
+                boxes[i].textContent = target[i];
+                boxes[i].classList.add("match");
+                continue;
+            }
+            if(lastInput && i < lastInput.length && lastInput[i] === target[i]) {
+                STATE.matchedChars[i] = true;
+                boxes[i].textContent = target[i];
+                boxes[i].classList.add("match");
+            }
+        }
+    }
+
+    function endGame(isClear, isRestore=false) {
+        STATE.gameOver = true;
+        
+        document.querySelectorAll('.char.hidden').forEach(el => {
+            el.className = "char revealed";
+            el.style.backgroundColor = "transparent";
+            el.style.color = "#888";
+        });
+
+        const finalScore = isClear ? calculateScore() : 0;
+
+        if(!isRestore && STATE.currentMode.startsWith('mission')) {
+            const today = new Date().toLocaleDateString('ja-JP');
+            const suffix = MODES[STATE.currentMode].seedSuffix;
+            const key = today + "_" + suffix;
+            localStorage.setItem(`wikimondo_score_v7_${key}`, JSON.stringify({
+                score: STATE.revealed,
+                word: STATE.targetWord,
+                cleared: isClear
+            }));
+        }
+
+        ELS.modal.classList.add('active');
+        ELS.mAnswer.textContent = STATE.targetWord;
+        ELS.fScore.textContent = finalScore;
+        ELS.fRevealed.textContent = STATE.revealed;
+        ELS.fTotal.textContent = STATE.totalMaskable;
+        
+        ELS.mTitle.textContent = isClear ? "MISSION COMPLETED" : "MISSION ABORTED";
+        ELS.mTitle.style.color = isClear ? "#333" : "#c62828";
+
+        generateVisualMap();
+        setupShare(finalScore, isClear);
+    }
+
+    function restoreGame(data) {
+        STATE.targetWord = data.word;
+        STATE.revealed = data.score;
+        ELS.loading.style.display = 'none';
+        ELS.modal.classList.add('active');
+        ELS.mTitle.textContent = "ALREADY PLAYED";
+        ELS.mAnswer.textContent = data.word;
+        ELS.fRevealed.textContent = data.score;
+        ELS.fScore.textContent = "---";
+        ELS.share.style.display = "none";
+    }
+
+    function generateVisualMap() {
+        ELS.visualMap.innerHTML = "";
+        STATE.revealHistory.forEach(status => {
+            if(status === 0) return;
+            const dot = document.createElement("div");
+            dot.className = "map-dot";
+            if(status === 3) dot.classList.add("revealed");
+            else if(status === 2) dot.classList.add("locked");
+            else dot.classList.add("hidden");
+            ELS.visualMap.appendChild(dot);
+        });
+    }
+
+    window.toggleMap = function() { ELS.visualMap.classList.toggle('active'); };
+
+    function setupShare(score, isClear) {
+        ELS.share.onclick = () => {
+            const label = MODES[STATE.currentMode].label;
+            const status = isClear ? "CLEARED" : "FAILED";
+            const blocks = 10;
+            const len = STATE.revealHistory.length;
+            const chunkSize = Math.ceil(len / blocks);
+            let bar = "";
+            for(let i=0; i<blocks; i++) {
+                let start = i * chunkSize;
+                let end = Math.min(start + chunkSize, len);
+                let chunk = STATE.revealHistory.slice(start, end);
+                let revealed = chunk.filter(x => x === 3).length;
+                let maskable = chunk.filter(x => x === 1 || x === 3).length;
+                if(maskable === 0) { bar += "⬛"; continue; }
+                let density = revealed / maskable;
+                if(density === 0) bar += "⬛";
+                else if(density < 0.3) bar += "🟩";
+                else if(density < 0.6) bar += "🟨";
+                else bar += "🟥";
+            }
+            const txt = `WikiMondo [${label}]\nScore: ${score}/10000\nMap: ${bar}\n#WikiMondo`;
+            navigator.clipboard.writeText(txt).then(() => ELS.share.textContent = "COPIED!");
+        };
+    }
+
+    ELS.btn.addEventListener('click', checkAnswer);
+    ELS.input.addEventListener('keydown', e => { if(e.key==='Enter') checkAnswer(); });
+    ELS.giveup.addEventListener('click', () => { if(confirm("降参しますか？")) endGame(false); });
+    ELS.showMoreBtn.addEventListener('click', () => {
+        ELS.docContainer.classList.remove('collapsed');
+        ELS.showMoreBtn.classList.add('hidden');
+    });
 
 </script>
 </body>
