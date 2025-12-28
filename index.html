@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WikiMondo - Confidential</title>
+    <title>WikiMondo - Mission Select</title>
     <style>
         :root {
             --bg-color: #dcdcdc;
@@ -41,7 +41,82 @@
             position: relative;
         }
 
-        /* Header */
+        /* --- Screens --- */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+        .screen.hidden { display: none; }
+
+        /* Start Screen */
+        #start-screen {
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 500;
+            background: #e0e0e0;
+        }
+
+        .title-box {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .title-box h1 {
+            font-size: 3rem;
+            margin: 0;
+            color: #333;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .title-box p {
+            color: #666;
+            margin: 10px 0 0 0;
+            font-weight: bold;
+        }
+
+        .mode-select {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .mode-btn {
+            background: #fff;
+            border: 2px solid #999;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: left;
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .mode-btn:active { transform: scale(0.98); }
+        .mode-btn:hover { border-color: #333; }
+
+        .mode-title { font-size: 1.2rem; font-weight: 900; color: #333; display: block; margin-bottom: 5px; }
+        .mode-desc { font-size: 0.85rem; color: #666; display: block; }
+        
+        .mode-tag {
+            position: absolute;
+            top: 10px; right: 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 4px;
+            color: #fff;
+        }
+        .tag-daily { background: #1976d2; }
+        .tag-free { background: #388e3c; }
+        .tag-hard { background: #d32f2f; }
+
+        /* Game Screen Header */
         header {
             padding: 10px 15px;
             background: #e0e0e0;
@@ -50,15 +125,13 @@
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
-            z-index: 20;
         }
 
-        h1 {
-            font-size: 1.3rem;
+        h1.game-title {
+            font-size: 1.2rem;
             margin: 0;
             font-weight: 800;
             color: #333;
-            letter-spacing: 1px;
         }
 
         .stamp {
@@ -81,23 +154,15 @@
             align-items: center;
             font-size: 0.9rem;
             flex-shrink: 0;
-            z-index: 20;
         }
+        .score-val { color: #4CAF50; font-weight: bold; margin-left: 5px; font-size: 1.1rem; }
 
-        .score-val {
-            color: #4CAF50;
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-left: 5px;
-        }
-
-        /* Scrollable Area */
+        /* Game Area */
         .game-scroll-area {
             flex-grow: 1;
             overflow-y: auto;
-            padding: 20px 15px 140px 15px; /* Footer height + buffer */
+            padding: 20px 15px 140px 15px;
             -webkit-overflow-scrolling: touch;
-            position: relative;
         }
 
         .paper {
@@ -105,22 +170,11 @@
             padding: 20px 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             border-radius: 4px;
-            position: relative;
-            /* 折り返し設定 */
-            word-break: break-all; 
+            word-break: break-all;
         }
 
-        /* Collapsible Text Logic */
-        .doc-container {
-            position: relative;
-            transition: max-height 0.5s ease;
-        }
-
-        .doc-container.collapsed {
-            max-height: 55vh; /* 画面の半分強で切る */
-            overflow: hidden;
-        }
-
+        .doc-container { position: relative; transition: max-height 0.5s ease; }
+        .doc-container.collapsed { max-height: 55vh; overflow: hidden; }
         .doc-container.collapsed::after {
             content: "";
             position: absolute;
@@ -130,247 +184,155 @@
         }
 
         .show-more-btn {
-            display: block;
-            width: 100%;
-            margin-top: -20px; /* Overlap gradient */
-            padding: 15px;
-            background: #eee;
-            border: 1px solid #ccc;
-            color: #333;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            position: relative;
-            z-index: 5;
-            border-radius: 0 0 4px 4px;
-            transition: background 0.2s;
+            display: block; width: 100%; margin-top: -20px; padding: 15px;
+            background: #eee; border: 1px solid #ccc; color: #333;
+            font-weight: bold; cursor: pointer; text-align: center;
+            position: relative; z-index: 5; border-radius: 0 0 4px 4px;
         }
-        .show-more-btn:hover { background: #e0e0e0; }
         .show-more-btn.hidden { display: none; }
 
-        .doc-text {
-            line-height: 1.8; /* ボックス間の縦隙間調整 */
-            font-size: 0; /*Remove whitespace between inline-blocks*/
-            text-align: justify;
-        }
-
-        /* Characters - UNIFIED SIZE */
+        /* Unified Char Box */
+        .doc-text { line-height: 1.8; font-size: 0; text-align: justify; }
         .char {
-            display: inline-flex; /* Flex to center content */
-            justify-content: center;
-            align-items: center;
-            width: 26px;  /* 固定幅 */
-            height: 32px; /* 固定高さ */
-            font-size: 16px; /* 文字サイズ */
-            margin: 1px;
-            border-radius: 2px;
-            user-select: none;
-            vertical-align: middle;
-            background-color: transparent;
-            color: var(--text-color);
+            display: inline-flex; justify-content: center; align-items: center;
+            width: 26px; height: 32px; font-size: 16px; margin: 1px;
+            border-radius: 2px; user-select: none; vertical-align: middle;
+            background-color: transparent; color: var(--text-color);
             transition: transform 0.1s, background-color 0.2s;
         }
-
-        /* Hidden (Blacked out) */
         .char.hidden {
-            background-color: var(--mask-color);
-            color: transparent;
-            cursor: pointer;
-            touch-action: manipulation;
+            background-color: var(--mask-color); color: transparent;
+            cursor: pointer; touch-action: manipulation;
         }
-        
         @media (hover: hover) {
             .char.hidden:hover { transform: scale(1.15); background-color: #444; z-index:2; position:relative; }
         }
-
-        /* Revealed */
         .char.revealed {
-            background-color: #f0f0f0; /* 薄いグレーでマス目を残す */
-            color: var(--text-color);
-            animation: textIn 0.3s forwards;
-            font-weight: bold;
+            background-color: #f0f0f0; color: var(--text-color);
+            animation: textIn 0.3s forwards; font-weight: bold;
         }
-
-        /* Locked */
         .char.locked {
-            background-color: var(--locked-bg);
-            color: transparent;
-            border: 1px dashed #999;
-            cursor: not-allowed;
-            position: relative;
+            background-color: var(--locked-bg); color: transparent;
+            border: 1px dashed #999; cursor: not-allowed; position: relative;
         }
-        .char.locked::after {
-            content: "×";
-            font-size: 10px;
-            color: #777;
-        }
+        .char.locked::after { content: "×"; font-size: 10px; color: #777; }
+        .char-break { display: block; height: 15px; }
+        @keyframes textIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Newline handling */
-        .char-break {
-            display: block;
-            height: 15px; /* 段落間の隙間 */
-        }
-
-        @keyframes textIn {
-            from { opacity: 0; transform: translateY(3px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Footer Input */
+        /* Footer */
         .footer-area {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: rgba(245,245,245,0.95);
-            backdrop-filter: blur(5px);
-            border-top: 1px solid #ccc;
-            padding: 10px;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(245,245,245,0.95); backdrop-filter: blur(5px);
+            border-top: 1px solid #ccc; padding: 10px; z-index: 100;
+            display: flex; flex-direction: column; gap: 10px;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
         }
 
-        /* Hint Boxes */
-        #hint-container {
-            display: flex;
-            justify-content: center;
-            gap: 4px;
-            margin-bottom: 5px;
-        }
+        #hint-container { display: flex; justify-content: center; gap: 4px; margin-bottom: 5px; }
         .hint-char {
-            width: 30px; height: 35px;
-            border: 2px solid #999;
-            background: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #333;
-            border-radius: 4px;
+            width: 30px; height: 35px; border: 2px solid #999; background: #fff;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 1.1rem; color: #333; border-radius: 4px;
         }
-        .hint-char.match {
-            background-color: var(--success-color);
-            border-color: var(--success-color);
-            color: #fff;
-        }
+        .hint-char.match { background-color: var(--success-color); border-color: var(--success-color); color: #fff; }
 
-        .input-group {
-            display: flex;
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-            gap: 8px;
-        }
-
+        .input-group { display: flex; width: 100%; max-width: 600px; margin: 0 auto; gap: 8px; }
         input[type="text"] {
-            flex: 1;
-            padding: 12px;
-            font-size: 16px; 
-            border: 2px solid #999;
-            border-radius: 6px;
-            outline: none;
-            -webkit-appearance: none;
+            flex: 1; padding: 12px; font-size: 16px; border: 2px solid #999;
+            border-radius: 6px; outline: none; -webkit-appearance: none;
         }
         input[type="text"]:focus { border-color: #333; }
+        button { border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; padding: 0 15px; }
+        .btn-submit { background: #222; color: #fff; flex-shrink: 0; }
+        .btn-giveup { background: #e0e0e0; color: #555; font-size: 0.8rem; flex-shrink: 0; }
 
-        button {
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 14px;
-            padding: 0 15px;
-        }
-
-        .btn-submit {
-            background: #222;
-            color: #fff;
-            flex-shrink: 0;
-        }
-
-        .btn-giveup {
-            background: #e0e0e0;
-            color: #555;
-            font-size: 0.8rem;
-            flex-shrink: 0;
-        }
-
-        #loading {
-            margin-top: 40vh;
-            text-align: center;
-            color: #666;
-            font-weight: bold;
-        }
-
-        /* Result Modal */
+        /* Loading & Modal */
+        #loading { margin-top: 40vh; text-align: center; color: #666; font-weight: bold; }
         .modal-wrap {
-            position: fixed;
-            top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.85);
-            display:flex; justify-content:center; align-items:center;
-            opacity:0; pointer-events:none; transition:opacity 0.3s;
-            z-index: 2000;
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center;
+            opacity:0; pointer-events:none; transition:opacity 0.3s; z-index: 2000;
         }
         .modal-wrap.active { opacity:1; pointer-events:auto; }
-
         .modal-box {
-            background: #fff;
-            padding: 25px;
-            width: 90%; max-width: 380px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #fff; padding: 25px; width: 90%; max-width: 380px;
+            border-radius: 12px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        
         .answer-reveal {
-            font-size: 1.4rem;
-            border-bottom: 2px solid #ddd;
-            margin: 15px 0;
-            padding-bottom: 10px;
-            font-weight: 900;
-            word-break: break-all;
+            font-size: 1.4rem; border-bottom: 2px solid #ddd; margin: 15px 0;
+            padding-bottom: 10px; font-weight: 900; word-break: break-all;
+        }
+        .share-btn {
+            background: #333; color: #fff; width: 100%; padding: 15px;
+            margin-top: 15px; font-size: 1rem;
+        }
+        .back-btn {
+            background: transparent; border: 1px solid #999; color: #555;
+            width: 100%; padding: 10px; margin-top: 10px;
         }
 
-        .share-btn {
-            background: #333; color: #fff;
-            width: 100%; padding: 15px;
-            margin-top: 15px;
-            font-size: 1rem;
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <h1>WikiMondo</h1>
-        <div class="stamp">CONFIDENTIAL</div>
-    </header>
-
-    <div class="stats-panel">
-        <div>MEKURI: <span id="score-val" class="score-val">0</span></div>
-        <div id="date-label"></div>
-    </div>
-
-    <div id="loading">Loading Classified Data...</div>
-
-    <div class="game-scroll-area" id="game-view" style="display:none;">
-        <div class="paper">
-            <div id="doc-container" class="doc-container collapsed">
-                <div id="doc-content" class="doc-text"></div>
+    
+    <div id="start-screen" class="screen">
+        <div class="title-box">
+            <h1>WikiMondo</h1>
+            <p>CLASSIFIED DOCUMENTS</p>
+        </div>
+        
+        <div class="mode-select">
+            <div class="mode-btn" onclick="startGame('daily')">
+                <span class="mode-tag tag-daily">DAILY</span>
+                <span class="mode-title">📅 今日の指令 (Daily)</span>
+                <span class="mode-desc">全ユーザー共通の問題。1日1回更新。<br>友達と結果を競うのに最適です。</span>
             </div>
-            <button id="show-more-btn" class="show-more-btn">⇩ 続きを読む (EXPAND)</button>
+
+            <div class="mode-btn" onclick="startGame('free')">
+                <span class="mode-tag tag-free">FREE</span>
+                <span class="mode-title">🎲 ランダム演習 (Free)</span>
+                <span class="mode-desc">良質な記事からランダムに出題。<br>毎回違う問題が出るので、何度でも遊べます。</span>
+            </div>
+
+            <div class="mode-btn" onclick="startGame('expert')">
+                <span class="mode-tag tag-hard">EXPERT</span>
+                <span class="mode-title">💀 超難問 (Expert)</span>
+                <span class="mode-desc">「秀逸な記事」から出題される長文・難問。<br>知識と忍耐が試されるハードモード。</span>
+            </div>
         </div>
     </div>
 
-    <div class="footer-area" id="footer-area" style="display:none;">
-        <div id="hint-container" style="display:none;"></div>
-        <div class="input-group">
-            <button class="btn-giveup" id="giveup-btn">降参</button>
-            <input type="text" id="guess-input" placeholder="タイトルを推測..." autocomplete="off">
-            <button class="btn-submit" id="submit-btn">回答</button>
+    <div id="game-screen" class="screen hidden">
+        <header>
+            <h1 class="game-title">WikiMondo</h1>
+            <div class="stamp">CONFIDENTIAL</div>
+        </header>
+
+        <div class="stats-panel">
+            <div>MEKURI: <span id="score-val" class="score-val">0</span></div>
+            <div id="mode-label" style="font-size:0.8rem; color:#aaa;"></div>
+        </div>
+
+        <div id="loading">Retrieving Data...</div>
+
+        <div class="game-scroll-area" id="game-view" style="display:none;">
+            <div class="paper">
+                <div id="doc-container" class="doc-container collapsed">
+                    <div id="doc-content" class="doc-text"></div>
+                </div>
+                <button id="show-more-btn" class="show-more-btn">⇩ 続きを読む (EXPAND)</button>
+            </div>
+        </div>
+
+        <div class="footer-area" id="footer-area" style="display:none;">
+            <div id="hint-container" style="display:none;"></div>
+            <div class="input-group">
+                <button class="btn-giveup" id="giveup-btn">降参</button>
+                <input type="text" id="guess-input" placeholder="タイトルを推測..." autocomplete="off">
+                <button class="btn-submit" id="submit-btn">回答</button>
+            </div>
         </div>
     </div>
 </div>
@@ -387,21 +349,28 @@
         </div>
 
         <button class="share-btn" id="share-btn">結果をコピー</button>
-        <div style="margin-top:15px; font-size:0.8rem; color:#888;" id="timer"></div>
+        <button class="back-btn" onclick="location.reload()">タイトルに戻る</button>
     </div>
 </div>
 
 <script>
     const CONFIG = {
         api: "https://ja.wikipedia.org/w/api.php",
-        category: "Category:良質な記事",
         splitters: ["における", "による", "としての", "からの", "への", "・", " ", "　", "の", "と", "は", "が", "を"],
         minWordLen: 2,
         hintThreshold: 5
     };
 
+    // Game Mode Settings
+    const MODES = {
+        daily:  { category: "Category:良質な記事", seedType: "date", label: "DAILY MISSION" },
+        free:   { category: "Category:良質な記事", seedType: "random", label: "FREE PLAY" },
+        expert: { category: "Category:秀逸な記事", seedType: "random", label: "EXPERT MISSION" }
+    };
+
     const STATE = {
-        today: new Date().toLocaleDateString('ja-JP'),
+        currentMode: null,
+        seedVal: 0,
         targetWord: "",
         targetDisplay: "",
         validReadings: [],
@@ -413,6 +382,8 @@
     };
 
     const ELS = {
+        startScreen: document.getElementById('start-screen'),
+        gameScreen: document.getElementById('game-screen'),
         loading: document.getElementById('loading'),
         gameView: document.getElementById('game-view'),
         docContainer: document.getElementById('doc-container'),
@@ -424,13 +395,12 @@
         btn: document.getElementById('submit-btn'),
         giveup: document.getElementById('giveup-btn'),
         score: document.getElementById('score-val'),
-        date: document.getElementById('date-label'),
+        modeLabel: document.getElementById('mode-label'),
         modal: document.getElementById('result-modal'),
         mTitle: document.getElementById('modal-result-title'),
         mAnswer: document.getElementById('modal-answer'),
         fScore: document.getElementById('final-score'),
-        share: document.getElementById('share-btn'),
-        timer: document.getElementById('timer')
+        share: document.getElementById('share-btn')
     };
 
     // --- RNG ---
@@ -443,25 +413,73 @@
         return function() { var t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }
     }
 
-    // --- Logic ---
-    async function fetchProblem() {
-        const seed = xmur3(STATE.today);
-        const rand = mulberry32(seed());
+    // --- INIT & MODE SELECT ---
+    window.startGame = function(modeKey) {
+        const mode = MODES[modeKey];
+        STATE.currentMode = modeKey;
+        
+        // UI Transition
+        ELS.startScreen.classList.add('hidden');
+        ELS.gameScreen.classList.remove('hidden');
+        ELS.modeLabel.textContent = mode.label;
+
+        // Seed Generation
+        let seedStr;
+        if (mode.seedType === "date") {
+            seedStr = new Date().toLocaleDateString('ja-JP');
+            // Check LS for daily
+            const saved = localStorage.getItem(`wikimondo_daily_${seedStr}`);
+            if(saved) {
+                restoreGame(JSON.parse(saved));
+                return;
+            }
+        } else {
+            // Random: use timestamp + random
+            seedStr = Date.now().toString() + Math.random().toString();
+        }
+
+        // Initialize RNG
+        const seedFunc = xmur3(seedStr);
+        STATE.seedVal = mulberry32(seedFunc());
+
+        // Fetch
+        fetchProblem(mode.category).then(data => {
+            initGame(data);
+        });
+    };
+
+    function restoreGame(data) {
+        STATE.targetWord = data.word;
+        STATE.revealed = data.score;
+        ELS.score.textContent = data.score;
+        ELS.loading.style.display = 'none';
+        endGame(data.cleared, true); // true = restored
+    }
+
+    // --- DATA FETCHING ---
+    async function fetchProblem(category) {
         const chars = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわ";
-        const startChar = chars[Math.floor(rand() * chars.length)];
+        // Use seeded random for start char
+        const startChar = chars[Math.floor(STATE.seedVal() * chars.length)];
 
         try {
-            const listUrl = `${CONFIG.api}?action=query&list=categorymembers&cmtitle=${encodeURIComponent(CONFIG.category)}&cmtype=page&cmsort=sortkey&cmstartsortkey=${encodeURIComponent(startChar)}&cmlimit=50&format=json&origin=*`;
+            const listUrl = `${CONFIG.api}?action=query&list=categorymembers&cmtitle=${encodeURIComponent(category)}&cmtype=page&cmsort=sortkey&cmstartsortkey=${encodeURIComponent(startChar)}&cmlimit=50&format=json&origin=*`;
             const res = await fetch(listUrl);
             const data = await res.json();
             
-            let cands = data.query.categorymembers.filter(i => i.title.length >= 3 && !i.title.includes("一覧"));
+            let cands = [];
+            if(data.query && data.query.categorymembers) {
+                cands = data.query.categorymembers.filter(i => i.title.length >= 3 && !i.title.includes("一覧"));
+            }
+
             if(!cands.length) return fetchFixed("インターネット");
 
-            const choice = cands[Math.floor(rand() * cands.length)];
+            // Pick one
+            const choice = cands[Math.floor(STATE.seedVal() * cands.length)];
             return await fetchDetails(choice.title);
         } catch(e) {
-            return fetchFixed("インターネット");
+            console.error(e);
+            return fetchFixed("人工知能");
         }
     }
 
@@ -470,7 +488,9 @@
     }
 
     async function fetchDetails(title) {
-        const url = `${CONFIG.api}?action=query&format=json&prop=extracts&explaintext&exchars=2000&origin=*&titles=${encodeURIComponent(title)}`;
+        // Fetch text. For Expert, maybe fetch more chars?
+        const charsLimit = STATE.currentMode === 'expert' ? 3000 : 2000;
+        const url = `${CONFIG.api}?action=query&format=json&prop=extracts&explaintext&exchars=${charsLimit}&origin=*&titles=${encodeURIComponent(title)}`;
         const res = await fetch(url);
         const json = await res.json();
         const pages = json.query.pages;
@@ -478,19 +498,21 @@
         return { title: title, text: pages[pageId].extract };
     }
 
-    function generateBannedWords(title) {
-        const cleanTitle = title.replace(/ \(.*\)/, "").replace(/（.*）/, "").trim();
-        STATE.targetDisplay = cleanTitle;
+    // --- GAME PREP ---
+    function initGame(data) {
+        const html = processText(data.title, data.text);
+        ELS.docContent.innerHTML = html;
+        ELS.loading.style.display = 'none';
+        ELS.gameView.style.display = 'block';
+        ELS.footer.style.display = 'flex';
 
-        const splitRegex = new RegExp(CONFIG.splitters.join("|"), "g");
-        const parts = cleanTitle.split(splitRegex).map(s => s.trim());
-        
-        const banned = new Set();
-        banned.add(cleanTitle);
-        parts.forEach(p => {
-            if (p.length >= CONFIG.minWordLen) banned.add(p);
-        });
-        return Array.from(banned).sort((a,b) => b.length - a.length);
+        // Check overflow for show-more button
+        setTimeout(() => {
+            if (ELS.docContent.scrollHeight < window.innerHeight * 0.6) {
+                ELS.docContainer.classList.remove('collapsed');
+                ELS.showMoreBtn.classList.add('hidden');
+            }
+        }, 100);
     }
 
     function processText(title, text) {
@@ -498,22 +520,29 @@
         STATE.targetWord = coreTitle;
         STATE.validReadings = [coreTitle];
 
-        const bannedWords = generateBannedWords(title);
+        // Prepare Banned Words
+        const cleanTitle = title.replace(/ \(.*\)/, "").replace(/（.*）/, "").trim();
+        STATE.targetDisplay = cleanTitle;
+        const splitRegex = new RegExp(CONFIG.splitters.join("|"), "g");
+        const parts = cleanTitle.split(splitRegex).map(s => s.trim());
+        const banned = new Set();
+        banned.add(cleanTitle);
+        parts.forEach(p => { if (p.length >= CONFIG.minWordLen) banned.add(p); });
+        const bannedWords = Array.from(banned).sort((a,b) => b.length - a.length);
+
         let maskRanges = [];
 
-        // Title masking
+        // 1. Title + Readings logic
         const escapeReg = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const titleRegex = new RegExp(`(${escapeReg(coreTitle)})\\s*([（\\(].*?[）\\)])`, 'gi');
-        
         let match;
         while ((match = titleRegex.exec(text)) !== null) {
             maskRanges.push({ start: match.index, end: match.index + match[0].length });
             const content = match[2].replace(/[（\(\)）]/g, "");
-            content.split(/[,、]/).forEach(r => {
-                if(r.trim()) STATE.validReadings.push(r.trim());
-            });
+            content.split(/[,、]/).forEach(r => { if(r.trim()) STATE.validReadings.push(r.trim()); });
         }
 
+        // 2. Banned Words logic
         bannedWords.forEach(word => {
             const wordReg = new RegExp(escapeReg(word), 'gi');
             while ((m = wordReg.exec(text)) !== null) {
@@ -521,21 +550,14 @@
             }
         });
 
-        // HTML Build with uniform boxes
+        // 3. Build HTML
         let html = "";
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
             if (char === '\n') { html += '<div class="char-break"></div>'; continue; }
-            if (/\s/.test(char)) { html += char; continue; } // Keep spaces as text for wrapping? or box them? Let's box them if they are meaningful, but usually strip or keep as spacer.
-            // For layout consistency, let's skip spaces in box logic or make them transparent boxes.
-            // Actually, wikipedia text has few spaces. Let's just output text-node space.
-            if (char === ' ' || char === '　') {
-                html += '<span class="char" style="opacity:0"> </span>';
-                continue;
-            }
+            if (char === ' ' || char === '　') { html += '<span class="char" style="opacity:0"> </span>'; continue; } // invisible spacer
 
             const isLocked = maskRanges.some(r => i >= r.start && i < r.end);
-
             if (isLocked) {
                 html += `<span class="char locked"></span>`;
             } else {
@@ -545,6 +567,7 @@
         return html;
     }
 
+    // --- INTERACTIONS ---
     window.reveal = function(el) {
         if(STATE.gameOver || el.classList.contains('revealed')) return;
         el.className = "char revealed";
@@ -554,167 +577,105 @@
 
     function checkAnswer() {
         if(STATE.gameOver) return;
-        
-        const rawInput = ELS.input.value.trim();
-        if(!rawInput) return;
+        const raw = ELS.input.value.trim();
+        if(!raw) return;
 
-        const inputNorm = rawInput.toLowerCase().replace(/\s/g, "");
-        const isCorrect = STATE.validReadings.some(v => v.toLowerCase().replace(/\s/g, "") === inputNorm);
+        const norm = raw.toLowerCase().replace(/\s/g, "");
+        const correct = STATE.validReadings.some(v => v.toLowerCase().replace(/\s/g, "") === norm);
         
-        if(isCorrect) {
-            endGame(true);
-        } else {
-            handleWrongGuess(rawInput);
-        }
+        if(correct) endGame(true);
+        else handleWrong(raw);
     }
 
-    function handleWrongGuess(input) {
+    function handleWrong(input) {
         STATE.wrongAttempts++;
+        ELS.input.style.borderColor = "#c62828";
+        ELS.input.classList.add('shake'); // reuse shake animation if defined or simple color
+        setTimeout(() => {
+            ELS.input.style.borderColor = "#999";
+            ELS.input.classList.remove('shake');
+        }, 500);
         ELS.input.value = "";
-        ELS.input.classList.add("shake"); // Apply to input element manually if needed, or container
-        // Simple shake effect via CSS on input
-        ELS.input.style.borderColor = "red";
-        setTimeout(() => ELS.input.style.borderColor = "#999", 500);
-
-        if (STATE.wrongAttempts >= CONFIG.hintThreshold) {
-            activateHint(input);
-        }
+        
+        if(STATE.wrongAttempts >= CONFIG.hintThreshold) activateHint(input);
     }
 
     function activateHint(lastInput) {
         STATE.hintActive = true;
         ELS.hintContainer.style.display = 'flex';
-        
-        if (ELS.hintContainer.children.length === 0) {
-            const len = STATE.targetDisplay.length;
-            for(let i=0; i<len; i++) {
-                const box = document.createElement("div");
-                box.className = "hint-char";
-                box.textContent = "？";
-                ELS.hintContainer.appendChild(box);
+        if(ELS.hintContainer.children.length === 0) {
+            for(let i=0; i<STATE.targetDisplay.length; i++) {
+                const b = document.createElement("div");
+                b.className = "hint-char";
+                b.textContent = "？";
+                ELS.hintContainer.appendChild(b);
                 STATE.matchedChars.push(false);
             }
         }
-        updateHintDisplay(lastInput);
-    }
-
-    function updateHintDisplay(input) {
+        // Update green letters
         const boxes = ELS.hintContainer.children;
         const target = STATE.targetDisplay;
-        
         for(let i=0; i<target.length; i++) {
             if(STATE.matchedChars[i]) {
                 boxes[i].textContent = target[i];
                 boxes[i].classList.add("match");
                 continue;
             }
-            if(input && i < input.length) {
-                if (input[i] === target[i]) {
-                    STATE.matchedChars[i] = true;
-                    boxes[i].textContent = target[i];
-                    boxes[i].classList.add("match");
-                }
+            if(lastInput && i < lastInput.length && lastInput[i] === target[i]) {
+                STATE.matchedChars[i] = true;
+                boxes[i].textContent = target[i];
+                boxes[i].classList.add("match");
             }
         }
     }
 
-    function endGame(isClear) {
+    function endGame(isClear, isRestore=false) {
         STATE.gameOver = true;
-        
+        // Reveal all
         document.querySelectorAll('.char.hidden').forEach(el => {
             el.className = "char revealed";
-            // Color distinction for auto-revealed
             el.style.backgroundColor = "transparent";
-            el.style.color = "#888"; 
+            el.style.color = "#888";
         });
 
-        ELS.modal.classList.add('active');
+        if(!isRestore) {
+            ELS.modal.classList.add('active');
+            // Save ONLY if Daily
+            if(STATE.currentMode === 'daily') {
+                const today = new Date().toLocaleDateString('ja-JP');
+                localStorage.setItem(`wikimondo_daily_${today}`, JSON.stringify({
+                    score: STATE.revealed,
+                    word: STATE.targetWord,
+                    cleared: isClear
+                }));
+            }
+        } else {
+            // If restored, show modal directly? Or let user see text?
+            // Usually showing modal is better
+            ELS.modal.classList.add('active');
+        }
+
         ELS.mAnswer.textContent = STATE.targetWord;
         ELS.fScore.textContent = STATE.revealed;
-        
         ELS.mTitle.textContent = isClear ? "MISSION COMPLETED" : "MISSION ABORTED";
         ELS.mTitle.style.color = isClear ? "#333" : "#c62828";
 
-        localStorage.setItem(`wikimondo_final_v2_${STATE.today}`, JSON.stringify({
-            score: STATE.revealed,
-            word: STATE.targetWord,
-            cleared: isClear
-        }));
-
-        setupShare(isClear);
-        setupTimer();
-    }
-
-    function setupShare(isClear) {
         ELS.share.onclick = () => {
-            const status = isClear ? "CLEARED" : "GAVE UP";
-            const text = `WikiMondo ${STATE.today}\nResult: ${status}\nScore: ${STATE.revealed} / Hint: ${STATE.hintActive ? "USED" : "NO"}\n#WikiMondo`;
-            navigator.clipboard.writeText(text).then(() => {
-                ELS.share.textContent = "COPIED!";
-            });
+            const label = MODES[STATE.currentMode].label;
+            const status = isClear ? "CLEARED" : "FAILED";
+            const txt = `WikiMondo [${label}]\nResult: ${status}\nScore: ${STATE.revealed}\n#WikiMondo`;
+            navigator.clipboard.writeText(txt).then(() => ELS.share.textContent = "COPIED!");
         };
     }
 
-    function setupTimer() {
-        setInterval(() => {
-            const now = new Date();
-            const tomorrow = new Date(now);
-            tomorrow.setDate(tomorrow.getDate()+1);
-            tomorrow.setHours(0,0,0,0);
-            const diff = tomorrow - now;
-            const h = Math.floor(diff/3600000).toString().padStart(2,'0');
-            const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
-            const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
-            ELS.timer.textContent = `NEXT DOC: ${h}:${m}:${s}`;
-        }, 1000);
-    }
-
-    // --- Show More Logic ---
+    // Events
+    ELS.btn.addEventListener('click', checkAnswer);
+    ELS.input.addEventListener('keydown', e => { if(e.key==='Enter') checkAnswer(); });
+    ELS.giveup.addEventListener('click', () => { if(confirm("降参しますか？")) endGame(false); });
     ELS.showMoreBtn.addEventListener('click', () => {
         ELS.docContainer.classList.remove('collapsed');
         ELS.showMoreBtn.classList.add('hidden');
     });
-
-    async function init() {
-        ELS.date.textContent = STATE.today;
-        
-        const saved = localStorage.getItem(`wikimondo_final_v2_${STATE.today}`);
-        if(saved) {
-            const d = JSON.parse(saved);
-            STATE.targetWord = d.word;
-            STATE.revealed = d.score;
-            ELS.score.textContent = d.score;
-            endGame(d.cleared); 
-            ELS.loading.style.display = 'none';
-            return;
-        }
-
-        const data = await fetchProblem();
-        const html = processText(data.title, data.text);
-        
-        ELS.docContent.innerHTML = html;
-        ELS.loading.style.display = 'none';
-        ELS.gameView.style.display = 'block';
-        ELS.footer.style.display = 'flex';
-
-        // Check content height to decide if button is needed
-        // Slight delay to allow render
-        setTimeout(() => {
-            if (ELS.docContent.scrollHeight < window.innerHeight * 0.6) {
-                // If content is short, auto-expand
-                ELS.docContainer.classList.remove('collapsed');
-                ELS.showMoreBtn.classList.add('hidden');
-            }
-        }, 100);
-    }
-
-    ELS.btn.addEventListener('click', checkAnswer);
-    ELS.input.addEventListener('keydown', e => { if(e.key === 'Enter') checkAnswer(); });
-    ELS.giveup.addEventListener('click', () => {
-        if(confirm("本当に降参して答えを見ますか？")) endGame(false);
-    });
-
-    init();
 
 </script>
 </body>
