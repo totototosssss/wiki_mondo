@@ -13,7 +13,7 @@
             --locked-bg: #ccc;
             --accent-color: #c62828;
             --success-color: #2e7d32;
-            --font-main: "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            --font-main: "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, monospace;
         }
 
         * { box-sizing: border-box; }
@@ -28,7 +28,6 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            /* スマホでのバウンススクロール防止 */
             overscroll-behavior-y: none;
         }
 
@@ -38,7 +37,8 @@
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            height: 100vh; /* 全画面使用 */
+            height: 100vh;
+            position: relative;
         }
 
         /* Header */
@@ -50,10 +50,11 @@
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
+            z-index: 20;
         }
 
         h1 {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             margin: 0;
             font-weight: 800;
             color: #333;
@@ -70,7 +71,7 @@
             opacity: 0.8;
         }
 
-        /* Score Bar */
+        /* Stats Bar */
         .stats-panel {
             background: #333;
             color: #fff;
@@ -80,6 +81,7 @@
             align-items: center;
             font-size: 0.9rem;
             flex-shrink: 0;
+            z-index: 20;
         }
 
         .score-val {
@@ -89,83 +91,132 @@
             margin-left: 5px;
         }
 
-        /* Scrollable Document Area */
+        /* Scrollable Area */
         .game-scroll-area {
             flex-grow: 1;
             overflow-y: auto;
-            padding: 20px 15px 120px 15px; /* 下部は入力欄のために空ける */
+            padding: 20px 15px 140px 15px; /* Footer height + buffer */
             -webkit-overflow-scrolling: touch;
+            position: relative;
         }
 
         .paper {
             background-color: var(--paper-color);
-            padding: 20px;
+            padding: 20px 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            min-height: 100%;
             border-radius: 4px;
+            position: relative;
+            /* 折り返し設定 */
+            word-break: break-all; 
         }
 
+        /* Collapsible Text Logic */
+        .doc-container {
+            position: relative;
+            transition: max-height 0.5s ease;
+        }
+
+        .doc-container.collapsed {
+            max-height: 55vh; /* 画面の半分強で切る */
+            overflow: hidden;
+        }
+
+        .doc-container.collapsed::after {
+            content: "";
+            position: absolute;
+            bottom: 0; left: 0; width: 100%; height: 100px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), var(--paper-color));
+            pointer-events: none;
+        }
+
+        .show-more-btn {
+            display: block;
+            width: 100%;
+            margin-top: -20px; /* Overlap gradient */
+            padding: 15px;
+            background: #eee;
+            border: 1px solid #ccc;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+            z-index: 5;
+            border-radius: 0 0 4px 4px;
+            transition: background 0.2s;
+        }
+        .show-more-btn:hover { background: #e0e0e0; }
+        .show-more-btn.hidden { display: none; }
+
         .doc-text {
-            line-height: 2.2;
-            font-size: 1rem; /* スマホで読みやすいサイズ */
+            line-height: 1.8; /* ボックス間の縦隙間調整 */
+            font-size: 0; /*Remove whitespace between inline-blocks*/
             text-align: justify;
         }
 
-        /* Characters */
+        /* Characters - UNIFIED SIZE */
         .char {
-            display: inline-block;
-            min-width: 8px;
-            text-align: center;
-            margin: 0 1px;
+            display: inline-flex; /* Flex to center content */
+            justify-content: center;
+            align-items: center;
+            width: 26px;  /* 固定幅 */
+            height: 32px; /* 固定高さ */
+            font-size: 16px; /* 文字サイズ */
+            margin: 1px;
             border-radius: 2px;
             user-select: none;
-            transition: transform 0.1s;
+            vertical-align: middle;
+            background-color: transparent;
+            color: var(--text-color);
+            transition: transform 0.1s, background-color 0.2s;
         }
 
+        /* Hidden (Blacked out) */
         .char.hidden {
             background-color: var(--mask-color);
             color: transparent;
             cursor: pointer;
-            border-bottom: 1px solid #000;
-            touch-action: manipulation; /* スマホタップ最適化 */
+            touch-action: manipulation;
         }
-        .char.hidden:active { transform: scale(1.2); background-color: #555; }
         
-        /* PC hover only */
         @media (hover: hover) {
-            .char.hidden:hover { transform: scale(1.2); background-color: #444; }
+            .char.hidden:hover { transform: scale(1.15); background-color: #444; z-index:2; position:relative; }
         }
 
+        /* Revealed */
         .char.revealed {
-            background-color: transparent;
+            background-color: #f0f0f0; /* 薄いグレーでマス目を残す */
             color: var(--text-color);
             animation: textIn 0.3s forwards;
-            font-weight: 500;
+            font-weight: bold;
         }
 
+        /* Locked */
         .char.locked {
             background-color: var(--locked-bg);
             color: transparent;
-            min-width: 14px;
-            border: 1px dashed #aaa;
+            border: 1px dashed #999;
             cursor: not-allowed;
             position: relative;
         }
         .char.locked::after {
             content: "×";
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -55%);
             font-size: 10px;
             color: #777;
         }
 
+        /* Newline handling */
+        .char-break {
+            display: block;
+            height: 15px; /* 段落間の隙間 */
+        }
+
         @keyframes textIn {
-            from { opacity: 0; transform: translateY(5px); }
+            from { opacity: 0; transform: translateY(3px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Hint & Input Footer */
+        /* Footer Input */
         .footer-area {
             position: fixed;
             bottom: 0; left: 0; right: 0;
@@ -213,7 +264,6 @@
             gap: 8px;
         }
 
-        /* iOS zoom prevention: font-size 16px */
         input[type="text"] {
             flex: 1;
             padding: 12px;
@@ -232,9 +282,7 @@
             cursor: pointer;
             font-size: 14px;
             padding: 0 15px;
-            transition: opacity 0.2s;
         }
-        button:active { opacity: 0.7; }
 
         .btn-submit {
             background: #222;
@@ -249,7 +297,6 @@
             flex-shrink: 0;
         }
 
-        /* Loading */
         #loading {
             margin-top: 40vh;
             text-align: center;
@@ -292,13 +339,6 @@
             margin-top: 15px;
             font-size: 1rem;
         }
-
-        .shake { animation: shake 0.4s; }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
     </style>
 </head>
 <body>
@@ -318,13 +358,15 @@
 
     <div class="game-scroll-area" id="game-view" style="display:none;">
         <div class="paper">
-            <div id="doc-content" class="doc-text"></div>
+            <div id="doc-container" class="doc-container collapsed">
+                <div id="doc-content" class="doc-text"></div>
+            </div>
+            <button id="show-more-btn" class="show-more-btn">⇩ 続きを読む (EXPAND)</button>
         </div>
     </div>
 
     <div class="footer-area" id="footer-area" style="display:none;">
         <div id="hint-container" style="display:none;"></div>
-        
         <div class="input-group">
             <button class="btn-giveup" id="giveup-btn">降参</button>
             <input type="text" id="guess-input" placeholder="タイトルを推測..." autocomplete="off">
@@ -355,25 +397,27 @@
         category: "Category:良質な記事",
         splitters: ["における", "による", "としての", "からの", "への", "・", " ", "　", "の", "と", "は", "が", "を"],
         minWordLen: 2,
-        hintThreshold: 5 // 5回間違えるとヒント
+        hintThreshold: 5
     };
 
     const STATE = {
         today: new Date().toLocaleDateString('ja-JP'),
-        targetWord: "",      // 正式タイトル
-        targetDisplay: "",   // 画面表示用（括弧なしなど）
+        targetWord: "",
+        targetDisplay: "",
         validReadings: [],
         revealed: 0,
         wrongAttempts: 0,
         gameOver: false,
         hintActive: false,
-        matchedChars: []     // ヒントで緑になった文字のインデックス
+        matchedChars: []
     };
 
     const ELS = {
         loading: document.getElementById('loading'),
         gameView: document.getElementById('game-view'),
-        doc: document.getElementById('doc-content'),
+        docContainer: document.getElementById('doc-container'),
+        docContent: document.getElementById('doc-content'),
+        showMoreBtn: document.getElementById('show-more-btn'),
         footer: document.getElementById('footer-area'),
         hintContainer: document.getElementById('hint-container'),
         input: document.getElementById('guess-input'),
@@ -426,7 +470,6 @@
     }
 
     async function fetchDetails(title) {
-        // スマホ向けに長すぎないようにするが、ある程度の長さは確保
         const url = `${CONFIG.api}?action=query&format=json&prop=extracts&explaintext&exchars=2000&origin=*&titles=${encodeURIComponent(title)}`;
         const res = await fetch(url);
         const json = await res.json();
@@ -437,7 +480,7 @@
 
     function generateBannedWords(title) {
         const cleanTitle = title.replace(/ \(.*\)/, "").replace(/（.*）/, "").trim();
-        STATE.targetDisplay = cleanTitle; // 表示・ヒント用
+        STATE.targetDisplay = cleanTitle;
 
         const splitRegex = new RegExp(CONFIG.splitters.join("|"), "g");
         const parts = cleanTitle.split(splitRegex).map(s => s.trim());
@@ -451,7 +494,6 @@
     }
 
     function processText(title, text) {
-        // Target & Readings
         const coreTitle = title.replace(/ \(.*\)/, "").replace(/（.*）/, "").trim();
         STATE.targetWord = coreTitle;
         STATE.validReadings = [coreTitle];
@@ -459,21 +501,19 @@
         const bannedWords = generateBannedWords(title);
         let maskRanges = [];
 
-        // 1. Title pattern
+        // Title masking
         const escapeReg = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const titleRegex = new RegExp(`(${escapeReg(coreTitle)})\\s*([（\\(].*?[）\\)])`, 'gi');
         
         let match;
         while ((match = titleRegex.exec(text)) !== null) {
             maskRanges.push({ start: match.index, end: match.index + match[0].length });
-            // Extract hiragana from parens
             const content = match[2].replace(/[（\(\)）]/g, "");
             content.split(/[,、]/).forEach(r => {
                 if(r.trim()) STATE.validReadings.push(r.trim());
             });
         }
 
-        // 2. Banned words
         bannedWords.forEach(word => {
             const wordReg = new RegExp(escapeReg(word), 'gi');
             while ((m = wordReg.exec(text)) !== null) {
@@ -481,12 +521,18 @@
             }
         });
 
-        // 3. HTML Build
+        // HTML Build with uniform boxes
         let html = "";
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
-            if (char === '\n') { html += '<br><br>'; continue; }
-            if (/\s/.test(char)) { html += char; continue; }
+            if (char === '\n') { html += '<div class="char-break"></div>'; continue; }
+            if (/\s/.test(char)) { html += char; continue; } // Keep spaces as text for wrapping? or box them? Let's box them if they are meaningful, but usually strip or keep as spacer.
+            // For layout consistency, let's skip spaces in box logic or make them transparent boxes.
+            // Actually, wikipedia text has few spaces. Let's just output text-node space.
+            if (char === ' ' || char === '　') {
+                html += '<span class="char" style="opacity:0"> </span>';
+                continue;
+            }
 
             const isLocked = maskRanges.some(r => i >= r.start && i < r.end);
 
@@ -506,7 +552,6 @@
         ELS.score.textContent = STATE.revealed;
     };
 
-    // --- Check Answer Logic ---
     function checkAnswer() {
         if(STATE.gameOver) return;
         
@@ -526,15 +571,11 @@
     function handleWrongGuess(input) {
         STATE.wrongAttempts++;
         ELS.input.value = "";
-        ELS.input.classList.add("shake");
-        ELS.input.placeholder = "違います...";
-        
-        setTimeout(() => { 
-            ELS.input.classList.remove("shake");
-            ELS.input.placeholder = "タイトルを推測...";
-        }, 1000);
+        ELS.input.classList.add("shake"); // Apply to input element manually if needed, or container
+        // Simple shake effect via CSS on input
+        ELS.input.style.borderColor = "red";
+        setTimeout(() => ELS.input.style.borderColor = "#999", 500);
 
-        // ヒント発動チェック
         if (STATE.wrongAttempts >= CONFIG.hintThreshold) {
             activateHint(input);
         }
@@ -544,19 +585,16 @@
         STATE.hintActive = true;
         ELS.hintContainer.style.display = 'flex';
         
-        // ヒントボックスの生成（まだなければ）
         if (ELS.hintContainer.children.length === 0) {
-            // STATE.targetDisplay (漢字の正式名称など) の長さを使用
             const len = STATE.targetDisplay.length;
             for(let i=0; i<len; i++) {
                 const box = document.createElement("div");
                 box.className = "hint-char";
-                box.textContent = "？"; // 初期表示
+                box.textContent = "？";
                 ELS.hintContainer.appendChild(box);
                 STATE.matchedChars.push(false);
             }
         }
-
         updateHintDisplay(lastInput);
     }
 
@@ -564,18 +602,12 @@
         const boxes = ELS.hintContainer.children;
         const target = STATE.targetDisplay;
         
-        // 直前の入力(input)とターゲットを比較して、一致していれば緑にする
-        // 入力文字数がターゲットと違う場合でも、重なる部分だけ判定する
-        
         for(let i=0; i<target.length; i++) {
             if(STATE.matchedChars[i]) {
-                // すでに開いている場所はそのまま
                 boxes[i].textContent = target[i];
                 boxes[i].classList.add("match");
                 continue;
             }
-
-            // 新規判定
             if(input && i < input.length) {
                 if (input[i] === target[i]) {
                     STATE.matchedChars[i] = true;
@@ -586,13 +618,13 @@
         }
     }
 
-    // --- End Game ---
     function endGame(isClear) {
         STATE.gameOver = true;
         
-        // Reveal all
         document.querySelectorAll('.char.hidden').forEach(el => {
             el.className = "char revealed";
+            // Color distinction for auto-revealed
+            el.style.backgroundColor = "transparent";
             el.style.color = "#888"; 
         });
 
@@ -603,8 +635,7 @@
         ELS.mTitle.textContent = isClear ? "MISSION COMPLETED" : "MISSION ABORTED";
         ELS.mTitle.style.color = isClear ? "#333" : "#c62828";
 
-        // Save
-        localStorage.setItem(`wikimondo_final_${STATE.today}`, JSON.stringify({
+        localStorage.setItem(`wikimondo_final_v2_${STATE.today}`, JSON.stringify({
             score: STATE.revealed,
             word: STATE.targetWord,
             cleared: isClear
@@ -638,11 +669,16 @@
         }, 1000);
     }
 
-    // --- Init ---
+    // --- Show More Logic ---
+    ELS.showMoreBtn.addEventListener('click', () => {
+        ELS.docContainer.classList.remove('collapsed');
+        ELS.showMoreBtn.classList.add('hidden');
+    });
+
     async function init() {
         ELS.date.textContent = STATE.today;
         
-        const saved = localStorage.getItem(`wikimondo_final_${STATE.today}`);
+        const saved = localStorage.getItem(`wikimondo_final_v2_${STATE.today}`);
         if(saved) {
             const d = JSON.parse(saved);
             STATE.targetWord = d.word;
@@ -656,19 +692,26 @@
         const data = await fetchProblem();
         const html = processText(data.title, data.text);
         
-        ELS.doc.innerHTML = html;
+        ELS.docContent.innerHTML = html;
         ELS.loading.style.display = 'none';
         ELS.gameView.style.display = 'block';
         ELS.footer.style.display = 'flex';
+
+        // Check content height to decide if button is needed
+        // Slight delay to allow render
+        setTimeout(() => {
+            if (ELS.docContent.scrollHeight < window.innerHeight * 0.6) {
+                // If content is short, auto-expand
+                ELS.docContainer.classList.remove('collapsed');
+                ELS.showMoreBtn.classList.add('hidden');
+            }
+        }, 100);
     }
 
-    // Listeners
     ELS.btn.addEventListener('click', checkAnswer);
     ELS.input.addEventListener('keydown', e => { if(e.key === 'Enter') checkAnswer(); });
     ELS.giveup.addEventListener('click', () => {
-        if(confirm("本当に降参して答えを見ますか？")) {
-            endGame(false);
-        }
+        if(confirm("本当に降参して答えを見ますか？")) endGame(false);
     });
 
     init();
