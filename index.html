@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WikiMondo - Daily Wikipedia Quiz</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --accent-color: #4CAF50;
+            --secondary-color: #333;
+            --highlight-color: #2c3e50;
+            --error-color: #e74c3c;
+            --font-main: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 1px solid var(--secondary-color);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Game Area */
+        #game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .hint-box {
+            background-color: var(--secondary-color);
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.8;
+            font-size: 1rem;
+            min-height: 150px;
+            white-space: pre-wrap;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .censor {
+            background-color: var(--text-color);
+            color: var(--text-color);
+            border-radius: 2px;
+            user-select: none;
+            cursor: help;
+        }
+        
+        /* Reveal Animation */
+        .revealed-char {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid var(--secondary-color);
+            background: transparent;
+            color: var(--text-color);
+            border-radius: 6px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            text-align: center;
+            height: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .success { color: var(--accent-color); }
+        .error { color: var(--error-color); }
+
+        /* Modal / Results */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--secondary-color);
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .result-answer {
+            font-size: 1.2rem;
+            color: var(--accent-color);
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .stat-val { font-size: 1.2rem; font-weight: bold; }
+        .stat-label { font-size: 0.7rem; color: #aaa; }
+
+        .share-btn {
+            background-color: #3b82f6;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .timer {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>WikiMondo</h1>
+        <div class="subtitle" id="date-display"></div>
+    </header>
+
+    <div id="loading" style="text-align: center;">今日の問題をロード中...</div>
+
+    <div id="game-area" style="display: none;">
+        <div class="hint-box" id="hint-text">
+            </div>
+        
+        <div class="status-message" id="status-msg"></div>
+
+        <div class="input-area">
+            <input type="text" id="guess-input" placeholder="記事のタイトルを推測..." autocomplete="off">
+            <button id="submit-btn">回答</button>
+        </div>
+        <div style="text-align: right; font-size: 0.8rem; color: #666;">
+            文字開示率: <span id="progress-percent">0</span>%
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="result-modal">
+    <div class="modal">
+        <div class="result-title" id="modal-title">RESULT</div>
+        <p>正解は...</p>
+        <div class="result-answer" id="modal-answer">?</div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-val" id="stat-progress">0%</span>
+                <span class="stat-label">開示率</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" id="stat-attempts">0</span>
+                <span class="stat-label">誤答数</span>
+            </div>
+        </div>
+
+        <div id="wiki-link-container" style="margin-bottom: 15px;">
+            <a id="wiki-link" href="#" target="_blank" style="color: #fff; text-decoration: underline;">Wikipediaで読む</a>
+        </div>
+
+        <button class="share-btn" id="share-btn">結果をコピーして共有</button>
+        <div class="timer" id="next-quiz-timer">次の問題まで: --:--:--</div>
+    </div>
+</div>
+
+<script>
+    // --- Configuration & Dictionary ---
+    // ※ 本来はAPI等で動的に取得するのが理想ですが、安定動作のため
+    // 「有名で5文字以上」の単語リストをハードコードしています。
+    // GitHub Pagesならこのリストを別ファイルで管理してもOK。
+    const WORD_LIST = [
+        "人工知能", "相対性理論", "パンケーキ", "ルネサンス", "ブラックホール",
+        "自由の女神像", "マリー・アントワネット", "京都議定書", "シャーロック・ホームズ",
+        "エッフェル塔", "ナポレオン・ボナパルト", "ハリー・ポッター", "ミケランジェロ",
+        "量子力学", "インスタントラーメン", "万里の長城", "ピラミッド", "モナ・リザ",
+        "シェイクスピア", "オードリー・ヘプバーン", "地動説", "ツタンカーメン",
+        "サグラダ・ファミリア", "コペルニクス", "スティーブ・ジョブズ", "バック・トゥ・ザ・フューチャー",
+        "ポケットモンスター", "スーパーマリオブラザーズ", "アルベルト・アインシュタイン",
+        "タイタニック", "ガラパゴス諸島", "ナスカの地上絵", "アポロ11号",
+        "インターネット", "スマートフォン", "クロワッサン", "カメハメハ1世",
+        "源氏物語", "織田信長", "坂本龍馬", "東京スカイツリー", "富士山",
+        "ベートーヴェン", "モーツァルト", "レオナルド・ダ・ヴィンチ", "万有引力"
+    ];
+
+    // --- State Management ---
+    const STATE = {
+        todayStr: new Date().toLocaleDateString('ja-JP'),
+        targetWord: "",
+        fullText: "",
+        maskedText: "", // The text with answers replaced by [LOCK]
+        revealedCount: 0, // How many chars are currently visible
+        totalChars: 0,
+        isGameOver: false,
+        attempts: 0,
+        intervalId: null
+    };
+
+    const ELS = {
+        loading: document.getElementById('loading'),
+        gameArea: document.getElementById('game-area'),
+        hintText: document.getElementById('hint-text'),
+        input: document.getElementById('guess-input'),
+        btn: document.getElementById('submit-btn'),
+        status: document.getElementById('status-msg'),
+        date: document.getElementById('date-display'),
+        percent: document.getElementById('progress-percent'),
+        modal: document.getElementById('result-modal'),
+        modalTitle: document.getElementById('modal-title'),
+        modalAnswer: document.getElementById('modal-answer'),
+        statProgress: document.getElementById('stat-progress'),
+        statAttempts: document.getElementById('stat-attempts'),
+        shareBtn: document.getElementById('share-btn'),
+        wikiLink: document.getElementById('wiki-link'),
+        timer: document.getElementById('next-quiz-timer')
+    };
+
+    // --- Helper Functions ---
+
+    // Seeded Random Generator (日替わり用)
+    // xmur3 hash function
+    function xmur3(str) {
+        let h = 1779033703 ^ str.length;
+        for(let i = 0; i < str.length; i++) {
+            h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+            h = h << 13 | h >>> 19;
+        }
+        return function() {
+            h = Math.imul(h ^ (h >>> 16), 2246822507);
+            h = Math.imul(h ^ (h >>> 13), 3266489909);
+            return (h ^= h >>> 16) >>> 0;
+        }
+    }
+
+    // Mulberry32 random generator
+    function mulberry32(a) {
+        return function() {
+            var t = a += 0x6D2B79F5;
+            t = Math.imul(t ^ t >>> 15, t | 1);
+            t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+    }
+
+    function getDailyWord() {
+        // Use YYYY-MM-DD as seed
+        const seed = xmur3(STATE.todayStr);
+        const rand = mulberry32(seed());
+        const index = Math.floor(rand() * WORD_LIST.length);
+        return WORD_LIST[index];
+    }
+
+    // --- Wikipedia API ---
+    async function fetchWikiData(title) {
+        const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro&explaintext&origin=*&titles=${encodeURIComponent(title)}`;
+        
+        try {
+            const res = await fetch(endpoint);
+            const data = await res.json();
+            const pages = data.query.pages;
+            const pageId = Object.keys(pages)[0];
+            if (pageId === "-1") throw new Error("Page not found");
+            return pages[pageId].extract;
+        } catch (e) {
+            console.error(e);
+            return "データの取得に失敗しました。";
+        }
+    }
+
+    // --- Game Logic ---
+
+    function censorText(text, answer) {
+        // 答えそのものと、カタカナ表記などを隠したい。
+        // 簡易版として、答えの文字列を「████」に置換
+        // 正規表現で、大文字小文字無視、グローバル置換
+        const escapedAnswer = answer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapedAnswer, 'gi');
+        return text.replace(regex, "🔒".repeat(answer.length)); // 絵文字1つで置換、あるいは文字数分隠す
+    }
+
+    function initGame() {
+        ELS.date.textContent = STATE.todayStr;
+        
+        // Check LocalStorage
+        const saveKey = `wikimondo_${STATE.todayStr}`;
+        const savedData = localStorage.getItem(saveKey);
+
+        STATE.targetWord = getDailyWord();
+
+        if (savedData) {
+            // Already played today
+            const parsed = JSON.parse(savedData);
+            showResultModal(parsed.success, parsed.attempts, parsed.progress);
+            // Even if played, fetching text to show in background (optional)
+            // But let's just keep the modal open.
+            return;
+        }
+
+        startLevel();
+    }
+
+    async function startLevel() {
+        const text = await fetchWikiData(STATE.targetWord);
+        
+        // 答えを隠す処理
+        // ここでは「答えの文字列」を特定のプレースホルダーに置換
+        // さらに、問題文として面白くするため、最初の200文字程度を使用
+        let cleanText = text.replace(/\n/g, ""); // 改行削除
+        if(cleanText.length > 300) cleanText = cleanText.substring(0, 300) + "...";
+        
+        // 答えを隠蔽文字に置換 (文字数分)
+        const masked = cleanText.split(STATE.targetWord).join("█".repeat(STATE.targetWord.length));
+        
+        STATE.fullText = masked; // ここには「答えが伏せられた状態の全文」が入る
+        STATE.totalChars = masked.length;
+        
+        ELS.loading.style.display = 'none';
+        ELS.gameArea.style.display = 'flex';
+        
+        // 文字送り開始
+        startReveal();
+    }
+
+    function startReveal() {
+        // 一定間隔で文字を表示していく
+        // 1文字ずつ `hint-box` に追加
+        ELS.hintText.textContent = "";
+        STATE.intervalId = setInterval(() => {
+            if (STATE.revealedCount < STATE.totalChars && !STATE.isGameOver) {
+                const char = STATE.fullText[STATE.revealedCount];
+                const span = document.createElement("span");
+                span.textContent = char;
+                span.className = "revealed-char";
+                
+                // 伏せ字の場合は色を変える等の装飾も可能
+                if(char === "█") {
+                    span.style.color = "#e74c3c"; // Red for hidden
+                }
+
+                ELS.hintText.appendChild(span);
+                STATE.revealedCount++;
+                
+                // Update percentage
+                const pct = Math.floor((STATE.revealedCount / STATE.totalChars) * 100);
+                ELS.percent.textContent = pct;
+            } else {
+                clearInterval(STATE.intervalId);
+            }
+        }, 150); // Speed: 150ms per char
+    }
+
+    function checkAnswer() {
+        if (STATE.isGameOver) return;
+
+        const userGuess = ELS.input.value.trim();
+        if (!userGuess) return;
+
+        // Normalize
+        // 日本語なので、ひらがな/カタカナの違い等は許容したいが、
+        // 今回は「完全一致」を基本としつつ、空白削除のみ行う
+        if (userGuess === STATE.targetWord) {
+            endGame(true);
+        } else {
+            STATE.attempts++;
+            ELS.status.textContent = `違うようだ... (誤答: ${STATE.attempts})`;
+            ELS.status.className = "status-message error";
+            ELS.input.value = "";
+            
+            // 誤答時のペナルティとして、文字を一気に少し進める？
+            // 今回はシンプルに何もしない
+            ELS.input.classList.add("shake");
+            setTimeout(() => ELS.input.classList.remove("shake"), 500);
+        }
+    }
+
+    function endGame(success) {
+        STATE.isGameOver = true;
+        clearInterval(STATE.intervalId);
+        
+        // Calculate progress percentage at time of stop
+        const pct = Math.floor((STATE.revealedCount / STATE.totalChars) * 100);
+        
+        // Save to LS
+        const resultData = {
+            success: success,
+            attempts: STATE.attempts,
+            progress: pct,
+            word: STATE.targetWord
+        };
+        localStorage.setItem(`wikimondo_${STATE.todayStr}`, JSON.stringify(resultData));
+
+        showResultModal(success, STATE.attempts, pct);
+    }
+
+    function showResultModal(success, attempts, progress) {
+        ELS.modal.classList.add('active');
+        ELS.modalTitle.textContent = success ? "CLEAR!" : "GAME OVER";
+        ELS.modalTitle.style.color = success ? "var(--accent-color)" : "var(--error-color)";
+        
+        ELS.modalAnswer.textContent = STATE.targetWord || "(今日の問題を確認中...)";
+        
+        // もしLocalStorageから読み込んだ場合、STATE.targetWordが空の可能性があるため再取得
+        if(!STATE.targetWord) {
+             const saved = JSON.parse(localStorage.getItem(`wikimondo_${STATE.todayStr}`));
+             if(saved && saved.word) ELS.modalAnswer.textContent = saved.word;
+        }
+
+        ELS.statProgress.textContent = progress + "%";
+        ELS.statAttempts.textContent = attempts;
+
+        const wikiUrl = `https://ja.wikipedia.org/wiki/${encodeURIComponent(ELS.modalAnswer.textContent)}`;
+        ELS.wikiLink.href = wikiUrl;
+
+        setupShareButton(success, attempts, progress);
+        setupTimer();
+    }
+
+    function setupShareButton(success, attempts, progress) {
+        ELS.shareBtn.onclick = () => {
+            const boxes = generateEmojiBar(progress);
+            const text = `WikiMondo ${STATE.todayStr}\n開示率: ${progress}%\n誤答: ${attempts}\n${boxes}\n#WikiMondo`;
+            navigator.clipboard.writeText(text).then(() => {
+                ELS.shareBtn.textContent = "コピーしました！";
+                setTimeout(() => ELS.shareBtn.textContent = "結果をコピーして共有", 2000);
+            });
+        };
+    }
+
+    function generateEmojiBar(percent) {
+        // 0-100% mapped to 5 blocks
+        const filled = Math.round(percent / 20);
+        let str = "";
+        for(let i=0; i<5; i++) {
+            if(i < filled) str += "🟩";
+            else str += "⬛";
+        }
+        return str;
+    }
+
+    function setupTimer() {
+        const updateTimer = () => {
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            
+            const diff = tomorrow - now;
+            const h = Math.floor(diff / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            ELS.timer.textContent = `次の問題まで: ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        };
+        setInterval(updateTimer, 1000);
+        updateTimer();
+    }
+
+    // --- Events ---
+    ELS.btn.addEventListener('click', checkAnswer);
+    ELS.input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
+
+    // Start
+    initGame();
+
+</script>
+</body>
+</html>
